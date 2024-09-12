@@ -21,6 +21,16 @@
         {{ for item in menu }}
         <li><a href="/{{ item.url }}">{{ item.title }}</a></li>
         {{ end }}
+        <li>
+          <details class="dropdown">
+            <summary role="button" class="secondary">Theme</summary>
+            <ul>
+              <li><a href="#" data-theme-switcher="auto">Auto</a></li>
+              <li><a href="#" data-theme-switcher="light">Light</a></li>
+              <li><a href="#" data-theme-switcher="dark">Dark</a></li>
+            </ul>
+          </details>
+        </li>
       </ul>
     </nav>
   </header>
@@ -34,5 +44,11 @@
   <footer class="container">
     <small>© 2024 {{ site_title }}</small>
   </footer>
+
+  <!-- Minimal theme switcher -->
+  <script src="js/minimal-theme-switcher.js"></script>
+
+  <!-- Modal -->
+  <script src="js/modal.js"></script>
 </body>
 </html>

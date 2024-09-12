@@ -10,24 +10,30 @@
       ]
     },
     "ContainerName": {
-      "type": "string"
+      "type": "string",
+      "description": "Docker container name"
     },
     "ContainerPort": {
       "type": "integer",
+      "description": "Container port to expose the application",
       "format": "int32"
     },
     "HostPort": {
       "type": "integer",
+      "description": "Host port to publish the container",
       "format": "int32"
     },
     "ImageName": {
-      "type": "string"
+      "type": "string",
+      "description": "Docker image name to build"
     },
     "SiteTitle": {
-      "type": "string"
+      "type": "string",
+      "description": "Title of the site"
     },
     "VersionTag": {
-      "type": "string"
+      "type": "string",
+      "description": "Docker image version tag"
     }
   },
   "definitions": {
@@ -58,6 +64,7 @@
         "BuildWebsite",
         "Clean",
         "CopyAssets",
+        "CopyJsScripts",
         "DeployDockerImage",
         "GenerateHtml"
       ]

@@ -30,16 +30,28 @@ class Build : NukeBuild
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
-    
-    [Parameter] readonly string ImageName;
-    [Parameter] readonly string VersionTag;
-    [Parameter] readonly string ContainerName;
-    [Parameter] readonly int HostPort;
-    [Parameter] readonly int ContainerPort;
-    [Parameter] readonly string SiteTitle;
-    
+
+    [Parameter("Docker image name to build")]
+    readonly string ImageName;
+
+    [Parameter("Docker image version tag")]
+    readonly string VersionTag;
+
+    [Parameter("Docker container name")]
+    readonly string ContainerName;
+
+    [Parameter("Host port to publish the container")]
+    readonly int HostPort;
+
+    [Parameter("Container port to expose the application")]
+    readonly int ContainerPort;
+
+    [Parameter("Title of the site")]
+    readonly string SiteTitle;
+
     AbsolutePath InputDirectory => RootDirectory / "input";
     AbsolutePath OutputDirectory => RootDirectory / "output";
+    AbsolutePath TemplateDirectory => RootDirectory / "template";
 
     Target Clean => _ => _
         .Executes(() =>
@@ -55,7 +67,7 @@ class Build : NukeBuild
         {
             Information("Generating HTML files from Markdown...");
             
-            var template = InputDirectory / "template.html";
+            var template = TemplateDirectory / "template.html";
             var templateContent = template.ReadAllText();
 
             // Step 1: Get all Markdown files and generate menu dynamically
@@ -120,8 +132,31 @@ class Build : NukeBuild
             }
         });
     
-    Target BuildWebsite => _ => _
+    Target CopyJsScripts => _ => _
         .DependsOn(CopyAssets)
+        .Executes(() =>
+        {
+            var templateScripts = TemplateDirectory / "js";
+            var outputScripts = OutputDirectory / "js";
+            
+            Information("Copying scripts...");
+            Information($"Template scripts directory: {templateScripts}");
+            Information($"Output scripts directory: {outputScripts}");
+        
+            // Check if the input scripts directory exists before attempting to copy
+            if (templateScripts.DirectoryExists())
+            {
+                templateScripts.Copy(outputScripts);
+                Information("Scripts copied successfully!");
+            }
+            else
+            {
+                Warning($"Scripts directory not found: {templateScripts}");
+            }
+        });
+    
+    Target BuildWebsite => _ => _
+        .DependsOn(CopyAssets, CopyJsScripts)
         .Executes(() =>
         {
             // Add more logic if necessary, like bundling, minifying, etc.
