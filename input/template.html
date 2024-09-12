@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="light dark" name="color-scheme">
+  <link
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+      rel="stylesheet"
+  >
+  <title>{{ page_title }}</title>
+</head>
+<body>
+  <!-- Header -->
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong>{{ site_title }}</strong></li>
+      </ul>
+      <ul>
+        {{ for item in menu }}
+        <li><a href="/{{ item.url }}">{{ item.title }}</a></li>
+        {{ end }}
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="container">
+    {{ content }}
+  </main>
+
+  <!-- Footer -->
+  <footer class="container">
+    <small>© 2024 {{ site_title }}</small>
+  </footer>
+</body>
+</html>

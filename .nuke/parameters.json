@@ -1,0 +1,9 @@
+{
+  "$schema": "build.schema.json",
+  "ImageName": "my-static-website",
+  "VersionTag": "latest",
+  "ContainerName": "my-static-website",
+  "HostPort": 8080,
+  "ContainerPort": 80,
+  "SiteTitle": "My Static Website"
+}
