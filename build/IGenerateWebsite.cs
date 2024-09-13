@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,7 +23,11 @@ public interface IGenerateWebsite : IHasWebsitePaths
             var templateContent = template.ReadAllText();
             
             // Use advanced extensions for Markdown processing
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
+            var pipeline = new MarkdownPipelineBuilder()
+                .UseEmojiAndSmiley()
+                .UseSmartyPants()
+                .UseAdvancedExtensions()
+                .Build();
 
             // Step 1: Get all Markdown files and generate menu dynamically
             var markdownFiles = InputDirectory.GlobFiles("**/*.md");
@@ -33,6 +38,8 @@ public interface IGenerateWebsite : IHasWebsitePaths
                     title = Path.GetFileNameWithoutExtension((string)file),
                     url = $"{Path.GetFileNameWithoutExtension((string)file)}.html"
                 })
+                // exclude index.html from the menu
+                .Where(item => item.url != "index.html")
                 .ToList();
             
             // Step 2: Generate HTML for each Markdown file

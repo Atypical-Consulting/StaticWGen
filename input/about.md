@@ -20,6 +20,19 @@ tasks like:
 [Pico CSS](https://picocss.com) is a lightweight, minimalist CSS framework. It offers a great balance between simplicity
 and elegance, making it easy to style static websites without writing extensive CSS code.
 
+## Parsing Markdown Files
+
+This demo uses the `Markdig` library to parse Markdown files. This allows you to write content in Markdown format
+and have some nice extensions like `Mermaid` diagrams or `Emoji` support. ;)
+
+```mermaid
+graph TD;
+    A-->B;
+    A-->C;
+    B-->D;
+    C-->D;
+```
+
 ### Features of This Demo
 
 - Static site generation from Markdown files
