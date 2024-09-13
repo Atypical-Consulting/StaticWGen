@@ -31,22 +31,22 @@ class Build : NukeBuild
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
-    [Parameter("Docker image name to build")]
+    [Required][Parameter("Docker image name to build")]
     readonly string ImageName;
 
-    [Parameter("Docker image version tag")]
+    [Required][Parameter("Docker image version tag")]
     readonly string VersionTag;
 
-    [Parameter("Docker container name")]
+    [Required][Parameter("Docker container name")]
     readonly string ContainerName;
 
-    [Parameter("Host port to publish the container")]
+    [Required][Parameter("Host port to publish the container")]
     readonly int HostPort;
 
-    [Parameter("Container port to expose the application")]
+    [Required][Parameter("Container port to expose the application")]
     readonly int ContainerPort;
 
-    [Parameter("Title of the site")]
+    [Required][Parameter("Title of the site")]
     readonly string SiteTitle;
 
     AbsolutePath InputDirectory => RootDirectory / "input";
