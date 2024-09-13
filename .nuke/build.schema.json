@@ -63,6 +63,7 @@
         "BuildDockerImage",
         "BuildWebsite",
         "Clean",
+        "CompressOutput",
         "CopyAssets",
         "CopyJsScripts",
         "DeployDockerImage",

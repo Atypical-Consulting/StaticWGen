@@ -166,6 +166,34 @@ class Build : NukeBuild
             // Add more logic if necessary, like bundling, minifying, etc.
             Information("Static website built successfully!");
         });
+    
+    Target CompressOutput => _ => _
+        .TriggeredBy(BuildWebsite)
+        .Executes(() =>
+        {
+            try
+            {
+                var zipFile = RootDirectory / "site.zip";
+                Information($"Compressing output directory '{OutputDirectory}' to '{zipFile}'...");
+
+                // Remove existing zip file if it exists
+                if (File.Exists(zipFile))
+                {
+                    Information("Existing zip file found. Deleting...");
+                    File.Delete(zipFile);
+                }
+
+                // Compress the output directory
+                OutputDirectory.ZipTo(zipFile);
+
+                Information("Output directory compressed successfully!");
+            }
+            catch (Exception ex)
+            {
+                Error($"An error occurred while compressing: {ex.Message}");
+                throw;
+            }
+        });
 
     Target BuildDockerImage => _ => _
         .DependsOn(BuildWebsite)
