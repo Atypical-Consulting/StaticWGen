@@ -8,7 +8,23 @@
       href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
       rel="stylesheet"
   >
-  <title>{{ page_title }}</title>
+  <title>{{ page_title }} - {{ site_title }}</title>
+  <meta name="description" content="{{ description }}">
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="{{ page_title }} - {{ site_title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:image" content="{{ image_url }}">
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ page_title }} - {{ site_title }}">
+  <meta name="twitter:description" content="{{ description }}">
+  <meta name="twitter:image" content="{{ image_url }}">
+  <!-- Other meta tags -->
+  <meta name="keywords" content="{{ keywords }}">
+  <meta name="author" content="{{ author }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
   <!-- Header -->

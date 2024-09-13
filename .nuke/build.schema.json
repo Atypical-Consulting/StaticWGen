@@ -18,6 +18,10 @@
       "description": "Container port to expose the application",
       "format": "int32"
     },
+    "DefaultImageUrl": {
+      "type": "string",
+      "description": "Default image URL for social sharing"
+    },
     "HostPort": {
       "type": "integer",
       "description": "Host port to publish the container",
@@ -26,6 +30,10 @@
     "ImageName": {
       "type": "string",
       "description": "Docker image name to build"
+    },
+    "SiteBaseUrl": {
+      "type": "string",
+      "description": "Base URL of the site"
     },
     "SiteTitle": {
       "type": "string",
@@ -67,7 +75,9 @@
         "CopyAssets",
         "CopyJsScripts",
         "DeployDockerImage",
-        "GenerateHtml"
+        "GenerateHtml",
+        "GenerateRobotsTxt",
+        "GenerateSitemap"
       ]
     },
     "Verbosity": {

@@ -1,3 +1,11 @@
+---
+title: "Static Website Generator"
+description: "A simple static website generator powered by NUKE."
+author: "Philippe Matray"
+date: "2024-09-13"
+keywords: "static website, generator, nuke, c#, markdig"
+image: "./assets/logo-wgen.webp"
+---
 # Static Website Generator
 
 ## Description

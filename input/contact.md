@@ -1,3 +1,11 @@
+---
+title: "Contact Us"
+description: "Get in touch with us! We would love to hear from you."
+author: "Philippe Matray"
+date: "2024-09-13"
+keywords: "contact, get in touch, email, social media, office location"
+image: "./assets/logo-wgen.webp"
+---
 # Contact Us
 
 We would love to hear from you! Whether you have questions, feedback, or just want to say hello, feel free to reach out.

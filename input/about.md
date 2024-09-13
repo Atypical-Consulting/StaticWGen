@@ -1,3 +1,11 @@
+---
+title: "About This Demo"
+description: "Learn more about this demo website and the tools used to create it."
+author: "Philippe Matray"
+date: "2024-09-13"
+keywords: "about, demo, nuke, pico css"
+image: "./assets/logo-wgen.webp"
+---
 # About This Demo
 
 Welcome to the demo website! This site is generated using **Nuke**, a powerful build automation tool, and **Pico CSS**
