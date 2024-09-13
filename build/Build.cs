@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Nuke.Common;
 using Nuke.Common.CI;
 using Nuke.Common.Execution;
@@ -85,7 +86,7 @@ class Build : NukeBuild
                 .ToList();
             
             // Step 2: Generate HTML for each Markdown file
-            markdownFiles.ForEach(file =>
+            Parallel.ForEach(markdownFiles, file =>
             {
                 Information($"Generating HTML from {file}");
 
@@ -113,7 +114,7 @@ class Build : NukeBuild
         });
     
     Target CopyAssets => _ => _
-        .DependsOn(GenerateHtml)
+        .DependsOn(Clean)
         .Executes(() =>
         {
             var inputAssets = InputDirectory / "assets";
@@ -136,7 +137,7 @@ class Build : NukeBuild
         });
     
     Target CopyJsScripts => _ => _
-        .DependsOn(CopyAssets)
+        .DependsOn(Clean)
         .Executes(() =>
         {
             var templateScripts = TemplateDirectory / "js";
@@ -159,7 +160,7 @@ class Build : NukeBuild
         });
     
     Target BuildWebsite => _ => _
-        .DependsOn(CopyAssets, CopyJsScripts)
+        .DependsOn(GenerateHtml, CopyAssets, CopyJsScripts)
         .Executes(() =>
         {
             // Add more logic if necessary, like bundling, minifying, etc.
