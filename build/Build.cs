@@ -69,6 +69,9 @@ class Build : NukeBuild
             
             var template = TemplateDirectory / "template.html";
             var templateContent = template.ReadAllText();
+            
+            // Use advanced extensions for Markdown processing
+            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
 
             // Step 1: Get all Markdown files and generate menu dynamically
             var markdownFiles = InputDirectory.GlobFiles("**/*.md");
@@ -87,7 +90,7 @@ class Build : NukeBuild
                 Information($"Generating HTML from {file}");
 
                 var content = file.ReadAllText();
-                var htmlContent = Markdown.ToHtml(content);
+                var htmlContent = Markdown.ToHtml(content, pipeline);
 
                 // Replace placeholders in the template
                 var finalHtml = Template
@@ -100,7 +103,7 @@ class Build : NukeBuild
                         menu
                     });
 
-                var outputFile = OutputDirectory / $"{Path.GetFileNameWithoutExtension(file)}.html";
+                var outputFile = OutputDirectory / $"{file.NameWithoutExtension}.html";
                 outputFile.WriteAllText(finalHtml);
 
                 Information($"HTML generated successfully: {outputFile}");

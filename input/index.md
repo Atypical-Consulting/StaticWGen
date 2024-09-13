@@ -4,6 +4,7 @@
 
 This is a simple static website generator powered by [NUKE](https://nuke.build).
 The generator takes a markdown file as input and generates a static HTML file as output.
+It also create a docker image with the generated HTML file and deploys it to your local docker registry.
 
 <img src="./assets/logo-wgen.webp" alt="Static Website Generator" style="max-width: 400px;">
 
@@ -20,8 +21,8 @@ generate the HTML file.
 
 ## Usage
 
-To generate a static HTML file from a markdown file, run the following command:
+To generate a static HTML file from a markdown file, open a terminal and run the following command:
 
 ```
-nuke GenerateWebsite
+nuke
 ```

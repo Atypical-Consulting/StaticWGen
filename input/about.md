@@ -13,6 +13,8 @@ tasks like:
 - Generating static websites (like this one)
 - Packaging and deploying applications
 
+![youtube.com](https://www.youtube.com/watch?v=E7CufNR84M4)
+
 ## Why Pico CSS?
 
 [Pico CSS](https://picocss.com) is a lightweight, minimalist CSS framework. It offers a great balance between simplicity
