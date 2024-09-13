@@ -7,19 +7,16 @@ using Nuke.Common.CI;
 using Nuke.Common.Execution;
 using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
-using Nuke.Common.Tooling;
 using Nuke.Common.Utilities.Collections;
-using Nuke.Common.Tools.Docker;
 using Markdig;
 using Octokit;
 using Scriban;
 using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
-using static Nuke.Common.Tools.Docker.DockerTasks;
 using static Serilog.Log;
 
-class Build : NukeBuild
+class Build : NukeBuild, IClean, IGenerateWebsite, ICompressOutput, IDockerOperations
 {
     /// Support plugins are available for:
     ///   - JetBrains ReSharper        https://nuke.build/resharper
@@ -27,221 +24,8 @@ class Build : NukeBuild
     ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
     ///   - Microsoft VSCode           https://nuke.build/vscode
 
-    public static int Main () => Execute<Build>(x => x.DeployDockerImage);
+    public static int Main() => Execute<Build>(x => ((IDockerOperations)x).DeployDockerImage);
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
     readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
-
-    [Required][Parameter("Docker image name to build")]
-    readonly string ImageName;
-
-    [Required][Parameter("Docker image version tag")]
-    readonly string VersionTag;
-
-    [Required][Parameter("Docker container name")]
-    readonly string ContainerName;
-
-    [Required][Parameter("Host port to publish the container")]
-    readonly int HostPort;
-
-    [Required][Parameter("Container port to expose the application")]
-    readonly int ContainerPort;
-
-    [Required][Parameter("Title of the site")]
-    readonly string SiteTitle;
-
-    AbsolutePath InputDirectory => RootDirectory / "input";
-    AbsolutePath OutputDirectory => RootDirectory / "output";
-    AbsolutePath TemplateDirectory => RootDirectory / "template";
-
-    Target Clean => _ => _
-        .Executes(() =>
-        {
-            Information("Cleaning output directory...");
-            OutputDirectory.CreateOrCleanDirectory();
-            Information("Output directory cleaned successfully!");
-        });
-
-    Target GenerateHtml => _ => _
-        .DependsOn(Clean)
-        .Executes(() =>
-        {
-            Information("Generating HTML files from Markdown...");
-            
-            var template = TemplateDirectory / "template.html";
-            var templateContent = template.ReadAllText();
-            
-            // Use advanced extensions for Markdown processing
-            var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
-
-            // Step 1: Get all Markdown files and generate menu dynamically
-            var markdownFiles = InputDirectory.GlobFiles("**/*.md");
-            
-            var menu = markdownFiles
-                .Select(file => new
-                {
-                    title = Path.GetFileNameWithoutExtension(file),
-                    url = $"{Path.GetFileNameWithoutExtension(file)}.html"
-                })
-                .ToList();
-            
-            // Step 2: Generate HTML for each Markdown file
-            Parallel.ForEach(markdownFiles, file =>
-            {
-                Information($"Generating HTML from {file}");
-
-                var content = file.ReadAllText();
-                var htmlContent = Markdown.ToHtml(content, pipeline);
-
-                // Replace placeholders in the template
-                var finalHtml = Template
-                    .Parse(templateContent)
-                    .Render(new
-                    {
-                        site_title = SiteTitle,
-                        page_title = file.NameWithoutExtension,
-                        content = htmlContent,
-                        menu
-                    });
-
-                var outputFile = OutputDirectory / $"{file.NameWithoutExtension}.html";
-                outputFile.WriteAllText(finalHtml);
-
-                Information($"HTML generated successfully: {outputFile}");
-            });
-            
-            Information("HTML files generated successfully!");
-        });
-    
-    Target CopyAssets => _ => _
-        .DependsOn(Clean)
-        .Executes(() =>
-        {
-            var inputAssets = InputDirectory / "assets";
-            var outputAssets = OutputDirectory / "assets";
-            
-            Information("Copying assets...");
-            Information($"Input assets directory: {inputAssets}");
-            Information($"Output assets directory: {outputAssets}");
-        
-            // Check if the input assets directory exists before attempting to copy
-            if (inputAssets.DirectoryExists())
-            {
-                inputAssets.Copy(outputAssets);
-                Information("Assets copied successfully!");
-            }
-            else
-            {
-                Warning($"Assets directory not found: {inputAssets}");
-            }
-        });
-    
-    Target CopyJsScripts => _ => _
-        .DependsOn(Clean)
-        .Executes(() =>
-        {
-            var templateScripts = TemplateDirectory / "js";
-            var outputScripts = OutputDirectory / "js";
-            
-            Information("Copying scripts...");
-            Information($"Template scripts directory: {templateScripts}");
-            Information($"Output scripts directory: {outputScripts}");
-        
-            // Check if the input scripts directory exists before attempting to copy
-            if (templateScripts.DirectoryExists())
-            {
-                templateScripts.Copy(outputScripts);
-                Information("Scripts copied successfully!");
-            }
-            else
-            {
-                Warning($"Scripts directory not found: {templateScripts}");
-            }
-        });
-    
-    Target BuildWebsite => _ => _
-        .DependsOn(GenerateHtml, CopyAssets, CopyJsScripts)
-        .Executes(() =>
-        {
-            // Add more logic if necessary, like bundling, minifying, etc.
-            Information("Static website built successfully!");
-        });
-    
-    Target CompressOutput => _ => _
-        .TriggeredBy(BuildWebsite)
-        .Executes(() =>
-        {
-            try
-            {
-                var zipFile = RootDirectory / "site.zip";
-                Information($"Compressing output directory '{OutputDirectory}' to '{zipFile}'...");
-
-                // Remove existing zip file if it exists
-                if (File.Exists(zipFile))
-                {
-                    Information("Existing zip file found. Deleting...");
-                    File.Delete(zipFile);
-                }
-
-                // Compress the output directory
-                OutputDirectory.ZipTo(zipFile);
-
-                Information("Output directory compressed successfully!");
-            }
-            catch (Exception ex)
-            {
-                Error($"An error occurred while compressing: {ex.Message}");
-                throw;
-            }
-        });
-
-    Target BuildDockerImage => _ => _
-        .DependsOn(BuildWebsite)
-        .Executes(() =>
-        {
-            DockerLogger = (type, text) => Debug(text);
-            
-            DockerBuild(x => x
-                .SetPath(RootDirectory)
-                .SetTag($"{ImageName}:{VersionTag}")
-            );
-            
-            Information($"Docker image {ImageName}:{VersionTag} built successfully!");
-        });
-    
-    Target DeployDockerImage => _ => _
-        .DependsOn(BuildDockerImage)
-        .Executes(() =>
-        {
-            // Stop and remove any running container with the same name
-            if (IsContainerRunning(ContainerName))
-            {
-                Information($"Stopping and removing existing container {ContainerName}...");
-                DockerStop(x => x.SetContainers(ContainerName));
-                DockerRm(x => x.SetForce(true).SetContainers(ContainerName));
-                Information($"Existing container {ContainerName} stopped and removed successfully!");
-            }
-
-            // Run the new container
-            DockerRun(x => x
-                .SetDetach(true)
-                .SetPublish($"{HostPort}:{ContainerPort}")
-                .SetName(ContainerName)
-                .SetImage($"{ImageName}:{VersionTag}")
-                .SetProcessLogOutput(true)
-                .SetProcessLogInvocation(true)
-            );
-        
-            Information($"Docker container {ContainerName} running at http://localhost:{HostPort}");
-        });
-    
-    bool IsContainerRunning(string containerName)
-    {
-        var result = DockerPs(x => x
-            .SetFormat("{{.Names}}")
-            .SetFilter($"name={containerName}")
-        );
-        
-        return result.Count != 0;
-    }
 }
