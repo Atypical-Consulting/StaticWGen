@@ -182,7 +182,7 @@ class Build : NukeBuild
         .Executes(() =>
         {
             // Stop and remove any running container with the same name
-            if (DockerPs().Any(x => x.Text.Contains(ContainerName)))
+            if (IsContainerRunning(ContainerName))
             {
                 Information($"Stopping and removing existing container {ContainerName}...");
                 DockerStop(x => x.SetContainers(ContainerName));
@@ -202,4 +202,14 @@ class Build : NukeBuild
         
             Information($"Docker container {ContainerName} running at http://localhost:{HostPort}");
         });
+    
+    bool IsContainerRunning(string containerName)
+    {
+        var result = DockerPs(x => x
+            .SetFormat("{{.Names}}")
+            .SetFilter($"name={containerName}")
+        );
+        
+        return result.Count != 0;
+    }
 }
