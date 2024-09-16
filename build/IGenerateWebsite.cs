@@ -19,16 +19,6 @@ public interface IGenerateWebsite : IHasWebsitePaths
     
     [Parameter("Default image URL for social sharing")]
     string DefaultImageUrl => TryGetValue(() => DefaultImageUrl) ?? "";
-
-    // Use advanced extensions for Markdown processing
-    MarkdownPipeline MarkdownPipeline =>
-        TryGetValue(() => MarkdownPipeline)
-        ?? new MarkdownPipelineBuilder()
-            .UseYamlFrontMatter()
-            .UseEmojiAndSmiley()
-            .UseSmartyPants()
-            .UseAdvancedExtensions()
-            .Build();
     
     Target GenerateHtml => _ => _
         .DependsOn<IClean>(x => x.Clean)
@@ -101,8 +91,16 @@ public interface IGenerateWebsite : IHasWebsitePaths
 
             var content = file.ReadAllText();
 
+            // Use advanced extensions for Markdown processing
+            var markdownPipeline = new MarkdownPipelineBuilder()
+                .UseYamlFrontMatter()
+                .UseEmojiAndSmiley()
+                .UseSmartyPants()
+                .UseAdvancedExtensions()
+                .Build();
+            
             // Parse the Markdown document
-            var markdownDocument = Markdown.Parse(content, MarkdownPipeline);
+            var markdownDocument = Markdown.Parse(content, markdownPipeline);
 
             // Extract YAML front matter
             var metadata = ExtractMetadata(markdownDocument, content);
@@ -111,7 +109,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
             var markdownContent = RemoveFrontMatter(markdownDocument, content);
 
             // Convert Markdown to HTML
-            var htmlContent = Markdown.ToHtml(markdownContent, MarkdownPipeline);
+            var htmlContent = Markdown.ToHtml(markdownContent, markdownPipeline);
 
             // Prepare data for the template
             var templateData = PrepareTemplateData(file, metadata, htmlContent, menu);
@@ -172,7 +170,6 @@ public interface IGenerateWebsite : IHasWebsitePaths
     private object PrepareTemplateData(AbsolutePath file, Dictionary<string, string> metadata, string htmlContent, List<MenuItem> menu)
     {
         var pageUrl = new Uri(new Uri(SiteBaseUrl.TrimEnd('/') + "/"), $"{file.NameWithoutExtension}.html").AbsoluteUri;
-        var imageUrl = metadata.TryGetValue("image", out var image) ? image : DefaultImageUrl;
 
         var templateData = new
         {
@@ -184,7 +181,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
             date = metadata.TryGetValue("date", out var date) ? date : "",
             content = htmlContent,
             page_url = pageUrl,
-            image_url = imageUrl,
+            image_url = metadata.TryGetValue("image", out var image) ? image : DefaultImageUrl,
             menu
         };
         
