@@ -9,6 +9,8 @@ using Nuke.Common.IO;
 using Nuke.Common.ProjectModel;
 using Nuke.Common.Utilities.Collections;
 using Markdig;
+using Nuke.Common.CI.AzurePipelines;
+using Nuke.Common.CI.GitHubActions;
 using Octokit;
 using Scriban;
 using static Nuke.Common.EnvironmentInfo;

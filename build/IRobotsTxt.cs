@@ -1,7 +1,7 @@
 using Nuke.Common;
 using Nuke.Common.IO;
 using Scriban;
-using Serilog;
+using static Serilog.Log;
 
 public interface IRobotsTxt : IHasWebsitePaths
 {
@@ -10,7 +10,7 @@ public interface IRobotsTxt : IHasWebsitePaths
         .TriggeredBy<IGenerateWebsite>(x => x.GenerateHtml)
         .Executes(() =>
         {
-            Log.Information("Generating robots.txt...");
+            Information("Generating robots.txt...");
 
             var robotsTemplate = TemplateDirectory / "robots.txt";
             if (robotsTemplate.FileExists())
@@ -23,11 +23,11 @@ public interface IRobotsTxt : IHasWebsitePaths
                 var outputFile = OutputDirectory / "robots.txt";
                 outputFile.WriteAllText(processedContent);
 
-                Log.Information($"robots.txt generated at {outputFile}");
+                Information($"robots.txt generated at {outputFile}");
             }
             else
             {
-                Log.Warning($"robots.txt template not found at {robotsTemplate}");
+                Warning($"robots.txt template not found at {robotsTemplate}");
             }
         });
 }

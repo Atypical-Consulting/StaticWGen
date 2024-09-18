@@ -1,14 +1,16 @@
 using Nuke.Common;
 using Nuke.Common.IO;
-using Serilog;
+using static Serilog.Log;
+
+// TODO: Create IPublish interface and generate automatically the Release notes
 
 public interface IClean : IHasWebsitePaths
 {
     Target Clean => _ => _
         .Executes(() =>
         {
-            Log.Information("Cleaning output directory...");
+            Information("Cleaning output directory...");
             OutputDirectory.CreateOrCleanDirectory();
-            Log.Information("Output directory cleaned successfully!");
+            Information("Output directory cleaned successfully!");
         });
 }

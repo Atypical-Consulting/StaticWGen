@@ -17,4 +17,8 @@
     <PackageReference Include="Scriban" Version="5.10.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ci\" />
+  </ItemGroup>
+
 </Project>

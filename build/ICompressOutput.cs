@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Nuke.Common;
 using Nuke.Common.IO;
-using Serilog;
+using static Serilog.Log;
 
 public interface ICompressOutput : IHasWebsitePaths
 {
@@ -13,23 +13,23 @@ public interface ICompressOutput : IHasWebsitePaths
             try
             {
                 var zipFile = RootDirectory / "site.zip";
-                Log.Information($"Compressing output directory '{OutputDirectory}' to '{zipFile}'...");
+                Information($"Compressing output directory '{OutputDirectory}' to '{zipFile}'...");
 
                 // Remove existing zip file if it exists
-                if (File.Exists(zipFile))
+                if (zipFile.Exists())
                 {
-                    Log.Information("Existing zip file found. Deleting...");
-                    File.Delete(zipFile);
+                    Information("Existing zip file found. Deleting...");
+                    zipFile.DeleteFile();
                 }
 
                 // Compress the output directory
                 OutputDirectory.ZipTo(zipFile);
 
-                Log.Information("Output directory compressed successfully!");
+                Information("Output directory compressed successfully!");
             }
             catch (Exception ex)
             {
-                Log.Error($"An error occurred while compressing: {ex.Message}");
+                Error($"An error occurred while compressing: {ex.Message}");
                 throw;
             }
         });

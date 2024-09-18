@@ -4,7 +4,7 @@ using System.Linq;
 using System.Xml.Linq;
 using Nuke.Common;
 using Nuke.Common.IO;
-using Serilog;
+using static Serilog.Log;
 
 public interface ISitemap : IHasWebsitePaths
 {
@@ -13,7 +13,7 @@ public interface ISitemap : IHasWebsitePaths
         .TriggeredBy<IGenerateWebsite>(x => x.GenerateHtml)
         .Executes(() =>
         {
-            Log.Information("Generating sitemap.xml...");
+            Information("Generating sitemap.xml...");
 
             var baseUrl = SiteBaseUrl.TrimEnd('/'); // You need to define SiteBaseUrl
 
@@ -35,6 +35,6 @@ public interface ISitemap : IHasWebsitePaths
             var sitemapPath = OutputDirectory / "sitemap.xml";
             sitemap.Save(sitemapPath);
 
-            Log.Information($"sitemap.xml generated at {sitemapPath}");
+            Information($"sitemap.xml generated at {sitemapPath}");
         });
 }
