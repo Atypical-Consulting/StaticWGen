@@ -35,6 +35,6 @@ public interface ISitemap : IHasWebsitePaths
             var sitemapPath = OutputDirectory / "sitemap.xml";
             sitemap.Save(sitemapPath);
 
-            Information($"sitemap.xml generated at {sitemapPath}");
+            Information("sitemap.xml generated at {SitemapPath}", sitemapPath);
         });
 }

@@ -1,5 +1,4 @@
 using Nuke.Common;
-using Nuke.Common.Tooling;
 using Nuke.Common.Tools.Docker;
 using static Nuke.Common.Tools.Docker.DockerTasks;
 using static Serilog.Log;
@@ -25,14 +24,12 @@ public interface IDockerOperations : INukeBuild
         .DependsOn<IGenerateWebsite>(x => x.BuildWebsite)
         .Executes(() =>
         {
-            DockerLogger = (type, text) => Debug(text);
-            
             DockerBuild(x => x
                 .SetPath(RootDirectory)
                 .SetTag($"{ImageName}:{VersionTag}")
             );
             
-            Information($"Docker image {ImageName}:{VersionTag} built successfully!");
+            Information("Docker image {ImageName}:{VersionTag} built successfully!", ImageName, VersionTag);
         });
     
     Target DeployDockerImage => _ => _
@@ -42,10 +39,10 @@ public interface IDockerOperations : INukeBuild
             // Stop and remove any running container with the same name
             if (IsContainerRunning(ContainerName))
             {
-                Information($"Stopping and removing existing container {ContainerName}...");
+                Information("Stopping and removing existing container {ContainerName}...", ContainerName);
                 DockerStop(x => x.SetContainers(ContainerName));
                 DockerRm(x => x.SetForce(true).SetContainers(ContainerName));
-                Information($"Existing container {ContainerName} stopped and removed successfully!");
+                Information("Existing container {ContainerName} stopped and removed successfully!", ContainerName);
             }
 
             // Run the new container
@@ -54,11 +51,9 @@ public interface IDockerOperations : INukeBuild
                 .SetPublish($"{HostPort}:{ContainerPort}")
                 .SetName(ContainerName)
                 .SetImage($"{ImageName}:{VersionTag}")
-                .SetProcessLogOutput(true)
-                .SetProcessLogInvocation(true)
             );
         
-            Information($"Docker container {ContainerName} running at http://localhost:{HostPort}");
+            Information("Docker container {ContainerName} running at http://localhost:{HostPort}", ContainerName, HostPort);
         });
     
     bool IsContainerRunning(string containerName)

@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using Markdig;
 using Markdig.Extensions.Yaml;
+using Markdig.Prism;
+using Markdig.Renderers;
+using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Nuke.Common;
 using Nuke.Common.IO;
@@ -57,8 +60,17 @@ public interface IGenerateWebsite : IHasWebsitePaths
             CopyDirectory(templateScripts, outputScripts, "Scripts");
         });
     
+    Target CopyCss => _ => _
+        .DependsOn<IClean>(x => x.Clean)
+        .Executes(() =>
+        {
+            var templateCss = TemplateDirectory / "css";
+            var outputCss = OutputDirectory / "css";
+            CopyDirectory(templateCss, outputCss, "CSS");
+        });
+    
     Target BuildWebsite => _ => _
-        .DependsOn(CopyAssets, CopyJsScripts)
+        .DependsOn(CopyAssets, CopyJsScripts, CopyCss)
         .DependsOn<ISitemap>(x => x.GenerateSitemap)
         .DependsOn<IRobotsTxt>(x => x.GenerateRobotsTxt)
         .Executes(() =>
@@ -66,7 +78,6 @@ public interface IGenerateWebsite : IHasWebsitePaths
             // Add more logic if necessary, like bundling, minifying, etc.
             Information("Static website built successfully!");
         });
-    
     
     private static List<MenuItem> GenerateMenu(IReadOnlyCollection<AbsolutePath> markdownFiles)
     {
@@ -94,9 +105,13 @@ public interface IGenerateWebsite : IHasWebsitePaths
             // Use advanced extensions for Markdown processing
             var markdownPipeline = new MarkdownPipelineBuilder()
                 .UseYamlFrontMatter()
-                .UseEmojiAndSmiley()
+                .UseMathematics()
+                // TODO: Fix conflict between Emoji and Math
+                // .UseEmojiAndSmiley()
                 .UseSmartyPants()
                 .UseAdvancedExtensions()
+                // TODO: Fix conflict between Prism and Mermaid
+                // .UsePrism()
                 .Build();
             
             // Parse the Markdown document
@@ -210,5 +225,25 @@ public interface IGenerateWebsite : IHasWebsitePaths
     {
         public required string Title { get; init; }
         public required string Url { get; init; }
+    }
+}
+
+public class CustomCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
+{
+    protected override void Write(HtmlRenderer renderer, CodeBlock obj)
+    {
+        if (obj is FencedCodeBlock fencedCodeBlock)
+        {
+            var language = fencedCodeBlock.Info ?? "plaintext";
+            renderer.Write("<pre><code class=\"language-").Write(language).Write("\">");
+            renderer.WriteLeafRawLines(obj, true, true);
+            renderer.WriteLine("</code></pre>");
+        }
+        else
+        {
+            renderer.Write("<pre><code>");
+            renderer.WriteLeafRawLines(obj, true, true);
+            renderer.WriteLine("</code></pre>");
+        }
     }
 }

@@ -1,49 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "properties": {
-    "Configuration": {
-      "type": "string",
-      "description": "Configuration to build - Default is 'Debug' (local) or 'Release' (server)",
-      "enum": [
-        "Debug",
-        "Release"
-      ]
-    },
-    "ContainerName": {
-      "type": "string",
-      "description": "Docker container name"
-    },
-    "ContainerPort": {
-      "type": "integer",
-      "description": "Container port to expose the application",
-      "format": "int32"
-    },
-    "DefaultImageUrl": {
-      "type": "string",
-      "description": "Default image URL for social sharing"
-    },
-    "HostPort": {
-      "type": "integer",
-      "description": "Host port to publish the container",
-      "format": "int32"
-    },
-    "ImageName": {
-      "type": "string",
-      "description": "Docker image name to build"
-    },
-    "SiteBaseUrl": {
-      "type": "string",
-      "description": "Base URL of the site"
-    },
-    "SiteTitle": {
-      "type": "string",
-      "description": "Title of the site"
-    },
-    "VersionTag": {
-      "type": "string",
-      "description": "Docker image version tag"
-    }
-  },
   "definitions": {
     "Host": {
       "type": "string",
@@ -73,6 +29,7 @@
         "Clean",
         "CompressOutput",
         "CopyAssets",
+        "CopyCss",
         "CopyJsScripts",
         "DeployDockerImage",
         "GenerateHtml",
@@ -148,5 +105,55 @@
       }
     }
   },
-  "$ref": "#/definitions/NukeBuild"
+  "allOf": [
+    {
+      "properties": {
+        "Configuration": {
+          "type": "string",
+          "description": "Configuration to build - Default is 'Debug' (local) or 'Release' (server)",
+          "enum": [
+            "Debug",
+            "Release"
+          ]
+        },
+        "ContainerName": {
+          "type": "string",
+          "description": "Docker container name"
+        },
+        "ContainerPort": {
+          "type": "integer",
+          "description": "Container port to expose the application",
+          "format": "int32"
+        },
+        "DefaultImageUrl": {
+          "type": "string",
+          "description": "Default image URL for social sharing"
+        },
+        "HostPort": {
+          "type": "integer",
+          "description": "Host port to publish the container",
+          "format": "int32"
+        },
+        "ImageName": {
+          "type": "string",
+          "description": "Docker image name to build"
+        },
+        "SiteBaseUrl": {
+          "type": "string",
+          "description": "Base URL of the site"
+        },
+        "SiteTitle": {
+          "type": "string",
+          "description": "Title of the site"
+        },
+        "VersionTag": {
+          "type": "string",
+          "description": "Docker image version tag"
+        }
+      }
+    },
+    {
+      "$ref": "#/definitions/NukeBuild"
+    }
+  ]
 }

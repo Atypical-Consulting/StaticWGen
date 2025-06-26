@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Nuke.Common;
 using Nuke.Common.IO;
 using static Serilog.Log;
@@ -13,7 +12,7 @@ public interface ICompressOutput : IHasWebsitePaths
             try
             {
                 var zipFile = RootDirectory / "site.zip";
-                Information($"Compressing output directory '{OutputDirectory}' to '{zipFile}'...");
+                Information("Compressing output directory \'{OutputDirectory}\' to \'{ZipFile}\'...", OutputDirectory, zipFile);
 
                 // Remove existing zip file if it exists
                 if (zipFile.Exists())
@@ -29,7 +28,7 @@ public interface ICompressOutput : IHasWebsitePaths
             }
             catch (Exception ex)
             {
-                Error($"An error occurred while compressing: {ex.Message}");
+                Error("An error occurred while compressing: {ExMessage}", ex.Message);
                 throw;
             }
         });

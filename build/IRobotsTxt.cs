@@ -23,11 +23,11 @@ public interface IRobotsTxt : IHasWebsitePaths
                 var outputFile = OutputDirectory / "robots.txt";
                 outputFile.WriteAllText(processedContent);
 
-                Information($"robots.txt generated at {outputFile}");
+                Information("robots.txt generated at {OutputFile}", outputFile);
             }
             else
             {
-                Warning($"robots.txt template not found at {robotsTemplate}");
+                Warning("robots.txt template not found at {RobotsTemplate}", robotsTemplate);
             }
         });
 }

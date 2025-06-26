@@ -41,7 +41,22 @@ graph TD;
     C-->D;
 ```
 
-### Features of This Demo
+## Support for Prism.js
+
+This demo also includes support for syntax highlighting using `Prism.js`. You can easily add code blocks to your Markdown
+files and have them automatically highlighted.
+
+```csharp
+public class HelloWorld
+{
+    public static void Main()
+    {
+        Console.WriteLine("Hello, World!");
+    }
+}
+```
+
+## Features of This Demo
 
 - Static site generation from Markdown files
 - Automated build process with Nuke

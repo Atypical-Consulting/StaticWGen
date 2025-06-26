@@ -14,7 +14,6 @@ using Nuke.Common.CI.GitHubActions;
 using Octokit;
 using Scriban;
 using static Nuke.Common.EnvironmentInfo;
-using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Serilog.Log;
 
