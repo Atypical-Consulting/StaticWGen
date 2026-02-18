@@ -1,21 +1,28 @@
-# StaticWGen — Static Website Generator in .NET
+# StaticWGen — Static website generator for .NET
 
-A command-line static website generator built with .NET. Uses Nuke for build automation and supports templating for fast, repeatable site generation.
+A static website generator built with .NET and the Nuke build system, converting Markdown content to HTML output. Write content in Markdown, build with Nuke, deploy anywhere.
 
 ## ✨ Features
-- Template-based page generation
-- Nuke-powered build pipeline
-- Docker support
-- Input/output folder structure
+- Markdown-to-HTML content pipeline
+- Nuke-powered build system for reproducible builds
+- Docker support for containerized generation
+- Asset management and content organization
+- Configurable input/output directories
 
 ## 📦 Installation
 ```bash
-dotnet tool install --global StaticWGen
+git clone https://github.com/phmatray/StaticWGen
+cd StaticWGen
+dotnet tool restore
 ```
 
 ## 🚀 Quick Start
 ```bash
-staticwgen build --input ./content --output ./public
+# Build the static site
+./build.sh
+
+# Or on Windows
+./build.cmd
 ```
 
 ## 📄 License
