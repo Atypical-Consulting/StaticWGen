@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Markdig" Version="1.0.1" />
+    <PackageReference Include="Markdig" Version="1.1.1" />
     <PackageReference Include="Nuke.Common" Version="10.1.0" />
     <PackageReference Include="Scriban" Version="6.5.3" />
   </ItemGroup>
