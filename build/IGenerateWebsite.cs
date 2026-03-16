@@ -105,17 +105,24 @@ public interface IGenerateWebsite : IHasWebsitePaths
             var content = file.ReadAllText();
 
             // Use advanced extensions for Markdown processing
+            // Math must be registered before Emoji to prevent emoji from matching inside math delimiters
             var markdownPipeline = new MarkdownPipelineBuilder()
                 .UseYamlFrontMatter()
                 .UseMathematics()
-                // TODO: Fix conflict between Emoji and Math
-                // .UseEmojiAndSmiley()
+                .UseEmojiAndSmiley()
                 .UseSmartyPants()
                 .UseAdvancedExtensions()
-                // TODO: Fix conflict between Prism and Mermaid
-                // .UsePrism()
                 .Build();
-            
+
+            // Register custom code block renderer that handles Mermaid and Prism together
+            var writer = new StringWriter();
+            var htmlRenderer = new HtmlRenderer(writer);
+            markdownPipeline.Setup(htmlRenderer);
+            var defaultCodeBlockRenderer = htmlRenderer.ObjectRenderers.FindExact<CodeBlockRenderer>();
+            if (defaultCodeBlockRenderer != null)
+                htmlRenderer.ObjectRenderers.Remove(defaultCodeBlockRenderer);
+            htmlRenderer.ObjectRenderers.AddIfNotAlready(new MermaidAwareCodeBlockRenderer());
+
             // Parse the Markdown document
             var markdownDocument = Markdown.Parse(content, markdownPipeline);
 
@@ -125,8 +132,11 @@ public interface IGenerateWebsite : IHasWebsitePaths
             // Remove the YAML front matter from the content
             var markdownContent = RemoveFrontMatter(markdownDocument, content);
 
-            // Convert Markdown to HTML
-            var htmlContent = Markdown.ToHtml(markdownContent, markdownPipeline);
+            // Convert Markdown to HTML using custom renderer
+            var markdownDoc2 = Markdown.Parse(markdownContent, markdownPipeline);
+            htmlRenderer.Render(markdownDoc2);
+            writer.Flush();
+            var htmlContent = writer.ToString();
 
             // Prepare data for the template
             var templateData = PrepareTemplateData(file, metadata, htmlContent, menu);
@@ -246,16 +256,28 @@ public interface IGenerateWebsite : IHasWebsitePaths
     }
 }
 
-public class CustomCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
+public class MermaidAwareCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
 {
     protected override void Write(HtmlRenderer renderer, CodeBlock obj)
     {
         if (obj is FencedCodeBlock fencedCodeBlock)
         {
             var language = fencedCodeBlock.Info ?? "plaintext";
-            renderer.Write("<pre><code class=\"language-").Write(language).Write("\">");
-            renderer.WriteLeafRawLines(obj, true, true);
-            renderer.WriteLine("</code></pre>");
+
+            if (string.Equals(language, "mermaid", StringComparison.OrdinalIgnoreCase))
+            {
+                // Render mermaid blocks without <code> wrapper so Mermaid.js can process them
+                renderer.Write("<pre class=\"mermaid\">");
+                renderer.WriteLeafRawLines(obj, true, true);
+                renderer.WriteLine("</pre>");
+            }
+            else
+            {
+                // Render other code blocks with Prism-compatible language class
+                renderer.Write("<pre><code class=\"language-").Write(language).Write("\">");
+                renderer.WriteLeafRawLines(obj, true, true);
+                renderer.WriteLine("</code></pre>");
+            }
         }
         else
         {
