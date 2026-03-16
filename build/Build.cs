@@ -18,7 +18,7 @@ using static Nuke.Common.IO.PathConstruction;
 using static Serilog.Log;
 
 class Build : NukeBuild,
-    IClean, IGenerateWebsite, ISitemap, IRobotsTxt, IGenerateFeed, ICompressOutput, IDockerOperations
+    IClean, IGenerateWebsite, ISitemap, IRobotsTxt, IGenerateFeed, IGenerateTagPages, ICompressOutput, IDockerOperations
 {
     /// Support plugins are available for:
     ///   - JetBrains ReSharper        https://nuke.build/resharper

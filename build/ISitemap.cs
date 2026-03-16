@@ -17,8 +17,12 @@ public interface ISitemap : IHasWebsitePaths
 
             var baseUrl = SiteBaseUrl.TrimEnd('/'); // You need to define SiteBaseUrl
 
-            var urls = OutputDirectory.GlobFiles("*.html")
-                .Select(file => new Uri(new Uri(baseUrl + "/"), Path.GetFileName(file)));
+            var urls = OutputDirectory.GlobFiles("**/*.html")
+                .Select(file =>
+                {
+                    var relativePath = OutputDirectory.GetRelativePathTo(file).ToString().Replace('\\', '/');
+                    return new Uri(new Uri(baseUrl + "/"), relativePath);
+                });
 
             var sitemap = new XDocument(
                 new XElement("urlset",

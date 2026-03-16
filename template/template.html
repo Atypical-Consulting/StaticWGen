@@ -40,6 +40,7 @@
         {{ for item in menu }}
         <li><a href="/{{ item.url }}">{{ item.title }}</a></li>
         {{ end }}
+        <li><a href="/tags.html">Tags</a></li>
         <li>
           <details class="dropdown">
             <summary role="button" class="secondary">Theme</summary>
@@ -57,6 +58,15 @@
   <!-- Main -->
   <main class="container">
     {{ content }}
+    {{ if tags && tags.size > 0 }}
+    <nav aria-label="Tags">
+      <p><strong>Tags:</strong>
+        {{ for tag in tags }}
+        <a href="{{ tag.url }}" style="display: inline-block; padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.25rem;">{{ tag.name }}</a>
+        {{ end }}
+      </p>
+    </nav>
+    {{ end }}
   </main>
 
   <!-- Footer -->

@@ -74,6 +74,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
         .DependsOn<ISitemap>(x => x.GenerateSitemap)
         .DependsOn<IRobotsTxt>(x => x.GenerateRobotsTxt)
         .DependsOn<IGenerateFeed>(x => x.GenerateFeed)
+        .DependsOn<IGenerateTagPages>(x => x.GenerateTagPages)
         .Executes(() =>
         {
             // Add more logic if necessary, like bundling, minifying, etc.
@@ -187,21 +188,37 @@ public interface IGenerateWebsite : IHasWebsitePaths
     {
         var pageUrl = new Uri(new Uri(SiteBaseUrl.TrimEnd('/') + "/"), $"{file.NameWithoutExtension}.html").AbsoluteUri;
 
+        var tags = new List<TagLink>();
+        if (metadata.TryGetValue("keywords", out var keywordsStr) && !string.IsNullOrWhiteSpace(keywordsStr))
+        {
+            tags = keywordsStr
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(t => new TagLink { Name = t.ToLowerInvariant(), Url = $"/tags/{Uri.EscapeDataString(t.ToLowerInvariant())}.html" })
+                .ToList();
+        }
+
         var templateData = new
         {
             site_title = SiteTitle,
             page_title = metadata.TryGetValue("title", out var title) ? title : file.NameWithoutExtension,
             description = metadata.TryGetValue("description", out var description) ? description : "",
-            keywords = metadata.TryGetValue("keywords", out var keywords) ? keywords : "",
+            keywords = keywordsStr ?? "",
             author = metadata.TryGetValue("author", out var author) ? author : "",
             date = metadata.TryGetValue("date", out var date) ? date : "",
             content = htmlContent,
             page_url = pageUrl,
             image_url = metadata.TryGetValue("image", out var image) ? image : DefaultImageUrl,
-            menu
+            menu,
+            tags
         };
-        
+
         return templateData;
+    }
+
+    record TagLink
+    {
+        public required string Name { get; init; }
+        public required string Url { get; init; }
     }
     
     private void CopyDirectory(AbsolutePath source, AbsolutePath destination, string description)
