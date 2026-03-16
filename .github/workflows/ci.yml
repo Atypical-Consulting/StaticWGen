@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore NuGet packages
+        run: dotnet restore build/_build.csproj
+
+      - name: Build website
+        run: |
+          chmod +x build.sh
+          ./build.sh BuildWebsite \
+            --site-base-url "https://phmatray.github.io/StaticWGen" \
+            --site-title "StaticWGen"
+
+      - name: Verify generated output
+        run: |
+          echo "Checking generated files..."
+          test -f output/index.html || (echo "ERROR: index.html not found" && exit 1)
+          test -f output/sitemap.xml || (echo "ERROR: sitemap.xml not found" && exit 1)
+          test -f output/robots.txt || (echo "ERROR: robots.txt not found" && exit 1)
+          test -f output/feed.xml || (echo "ERROR: feed.xml not found" && exit 1)
+          test -d output/tags || (echo "ERROR: tags directory not found" && exit 1)
+          echo "All expected files present."
+          echo "Generated files:"
+          find output -type f | sort
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-output
+          path: output/
+          retention-days: 7
