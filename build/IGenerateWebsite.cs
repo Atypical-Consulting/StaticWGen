@@ -73,6 +73,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
         .DependsOn(CopyAssets, CopyJsScripts, CopyCss)
         .DependsOn<ISitemap>(x => x.GenerateSitemap)
         .DependsOn<IRobotsTxt>(x => x.GenerateRobotsTxt)
+        .DependsOn<IGenerateFeed>(x => x.GenerateFeed)
         .Executes(() =>
         {
             // Add more logic if necessary, like bundling, minifying, etc.

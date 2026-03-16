@@ -32,6 +32,7 @@
         "CopyCss",
         "CopyJsScripts",
         "DeployDockerImage",
+        "GenerateFeed",
         "GenerateHtml",
         "GenerateRobotsTxt",
         "GenerateSitemap"
@@ -128,6 +129,18 @@
         "DefaultImageUrl": {
           "type": "string",
           "description": "Default image URL for social sharing"
+        },
+        "FeedAuthor": {
+          "type": "string",
+          "description": "Author name for the Atom feed"
+        },
+        "FeedDescription": {
+          "type": "string",
+          "description": "Description for the Atom feed"
+        },
+        "FeedTitle": {
+          "type": "string",
+          "description": "Title for the Atom feed (defaults to SiteTitle)"
         },
         "HostPort": {
           "type": "integer",
