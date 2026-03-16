@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="Markdig" Version="0.41.3" />
     <PackageReference Include="Nuke.Common" Version="10.1.0" />
-    <PackageReference Include="Scriban" Version="6.2.1" />
+    <PackageReference Include="Scriban" Version="6.5.7" />
     <PackageReference Include="WebStoating.Markdig.Prism" Version="1.0.0" />
   </ItemGroup>
 
