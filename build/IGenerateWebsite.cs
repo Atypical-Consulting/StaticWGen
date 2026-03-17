@@ -36,6 +36,9 @@ public interface IGenerateWebsite : IHasWebsitePaths
     [Parameter("Include draft pages in output")]
     bool IncludeDrafts => TryGetValue<bool?>(() => IncludeDrafts) ?? false;
 
+    [Parameter("Continue processing remaining files when one fails")]
+    bool ContinueOnError => TryGetValue<bool?>(() => ContinueOnError) ?? false;
+
     Target GenerateHtml => _ => _
         .DependsOn<IClean>(x => x.Clean)
         .Executes(() =>
@@ -98,20 +101,56 @@ public interface IGenerateWebsite : IHasWebsitePaths
                 .ToList();
             var menu = GenerateMenu(menuFiles);
 
-            // Step 3: Generate HTML for each publishable file
-            publishableFiles.ForEach(file => ProcessMarkdownFile(file, templateContent, menu));
+            // Step 3: Generate HTML for each publishable file with error tracking
+            var successCount = 0;
+            var errorCount = 0;
+            var errors = new List<string>();
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            var publishedCount = publishableFiles.Count - archivedCount;
-            Information("Build Summary:");
-            Information("  Published: {Count} pages", publishedCount);
+            foreach (var file in publishableFiles)
+            {
+                try
+                {
+                    ProcessMarkdownFile(file, templateContent, menu);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    errorCount++;
+                    var errorMsg = $"{file.Name}: {ex.Message}";
+                    errors.Add(errorMsg);
+                    Error("Error processing {File}: {Message}", file.Name, ex.Message);
+
+                    if (!ContinueOnError)
+                        throw;
+                }
+            }
+
+            stopwatch.Stop();
+
+            // Build Summary
+            Information("═══════════════════════════════════════");
+            Information("  Build Summary");
+            Information("═══════════════════════════════════════");
+            Information("  Processed: {Count} pages ({Time:F1}s)", successCount, stopwatch.Elapsed.TotalSeconds);
             if (draftCount > 0)
                 Information("  Drafts:    {Count} pages {Status}", draftCount,
-                    IncludeDrafts ? "(included via --include-drafts)" : "(skipped)");
+                    IncludeDrafts ? "(included)" : "(skipped)");
             if (scheduledCount > 0)
                 Information("  Scheduled: {Count} pages {Status}", scheduledCount,
-                    IncludeDrafts ? "(included via --include-drafts)" : "(skipped)");
+                    IncludeDrafts ? "(included)" : "(skipped)");
             if (archivedCount > 0)
                 Information("  Archived:  {Count} pages", archivedCount);
+            if (errorCount > 0)
+            {
+                Error("  Errors:    {Count}", errorCount);
+                foreach (var err in errors)
+                    Error("    - {Error}", err);
+            }
+            Information("═══════════════════════════════════════");
+
+            if (errorCount > 0 && ContinueOnError)
+                Assert.Fail($"Build completed with {errorCount} error(s). See summary above.");
         });
 
     Target CopyAssets => _ => _
