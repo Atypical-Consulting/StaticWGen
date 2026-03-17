@@ -145,6 +145,14 @@
         </li>
       </ul>
     </nav>
+    <!-- Search -->
+    <div role="search" style="position: relative;">
+      <input type="search" id="site-search" placeholder="Search... (press /)"
+             aria-label="Search site content" autocomplete="off">
+      <div id="search-results" role="listbox" aria-label="Search results"
+           style="display:none; position:absolute; z-index:100; width:100%; max-height:300px; overflow-y:auto; background:var(--pico-card-background-color); border-radius:0.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.3); padding:0.5rem;">
+      </div>
+    </div>
   </header>
 
   <!-- Main -->
@@ -230,6 +238,89 @@
             el.click();
           }
         });
+      });
+    })();
+  </script>
+
+  <!-- Client-side search -->
+  <script>
+    (function() {
+      var searchInput = document.getElementById('site-search');
+      var resultsDiv = document.getElementById('search-results');
+      var searchIndex = null;
+      var debounceTimer = null;
+
+      // Lazy-load search index on first interaction
+      function loadIndex() {
+        if (searchIndex) return Promise.resolve();
+        return fetch('/search-index.json')
+          .then(function(r) { return r.json(); })
+          .then(function(data) { searchIndex = data; });
+      }
+
+      function search(query) {
+        if (!searchIndex || !query) { resultsDiv.style.display = 'none'; return; }
+        var q = query.toLowerCase();
+        var results = searchIndex.filter(function(entry) {
+          return entry.title.toLowerCase().includes(q) ||
+                 entry.description.toLowerCase().includes(q) ||
+                 entry.content.toLowerCase().includes(q) ||
+                 entry.tags.some(function(t) { return t.toLowerCase().includes(q); });
+        }).slice(0, 8);
+
+        if (results.length === 0) {
+          resultsDiv.innerHTML = '<p style="padding:0.5rem;margin:0;opacity:0.6;">No results found</p>';
+        } else {
+          resultsDiv.innerHTML = results.map(function(r, i) {
+            var desc = r.description ? '<br><small style="opacity:0.7;">' + r.description.substring(0, 80) + '</small>' : '';
+            return '<a href="' + r.url + '" role="option" style="display:block;padding:0.5rem;text-decoration:none;border-radius:0.25rem;"' +
+                   (i === 0 ? ' class="search-active"' : '') + '>' + r.title + desc + '</a>';
+          }).join('');
+        }
+        resultsDiv.style.display = 'block';
+      }
+
+      searchInput.addEventListener('focus', function() { loadIndex(); });
+      searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        var q = this.value;
+        debounceTimer = setTimeout(function() {
+          loadIndex().then(function() { search(q); });
+        }, 200);
+      });
+
+      // Keyboard navigation
+      searchInput.addEventListener('keydown', function(e) {
+        var items = resultsDiv.querySelectorAll('a');
+        var active = resultsDiv.querySelector('.search-active');
+        if (e.key === 'ArrowDown' && items.length) {
+          e.preventDefault();
+          var next = active ? active.nextElementSibling : items[0];
+          if (next) { if (active) active.classList.remove('search-active'); next.classList.add('search-active'); }
+        } else if (e.key === 'ArrowUp' && items.length) {
+          e.preventDefault();
+          var prev = active ? active.previousElementSibling : null;
+          if (prev) { active.classList.remove('search-active'); prev.classList.add('search-active'); }
+        } else if (e.key === 'Enter' && active) {
+          e.preventDefault();
+          window.location.href = active.getAttribute('href');
+        } else if (e.key === 'Escape') {
+          resultsDiv.style.display = 'none';
+          searchInput.blur();
+        }
+      });
+
+      // Close on outside click
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('[role="search"]')) resultsDiv.style.display = 'none';
+      });
+
+      // Global keyboard shortcut: / to focus search
+      document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          e.preventDefault();
+          searchInput.focus();
+        }
       });
     })();
   </script>
