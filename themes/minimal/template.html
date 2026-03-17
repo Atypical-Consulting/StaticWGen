@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title }} - {{ site_title }}</title>
+  <meta name="description" content="{{ description }}">
+  {{ if noindex }}<meta name="robots" content="noindex, nofollow">{{ end }}
+  <link rel="canonical" href="{{ canonical_url }}">
+  <meta property="og:title" content="{{ page_title }} - {{ site_title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:type" content="{{ og_type }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta name="author" content="{{ author }}">
+  <link rel="alternate" type="application/atom+xml" title="{{ site_title }} Feed" href="/feed.xml">
+  <style>
+    :root { --bg: #fff; --fg: #222; --link: #0066cc; --border: #ddd; --code-bg: #f5f5f5; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #1a1a1a; --fg: #e0e0e0; --link: #6db3f2; --border: #333; --code-bg: #2a2a2a; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
+    a { color: var(--link); }
+    nav { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    nav a { margin-right: 1rem; text-decoration: none; }
+    article { margin-bottom: 2rem; }
+    h1, h2, h3 { margin: 1.5rem 0 0.5rem; }
+    pre { background: var(--code-bg); padding: 1rem; overflow-x: auto; border-radius: 4px; margin: 1rem 0; }
+    code { font-family: 'SF Mono', Consolas, monospace; font-size: 0.9em; }
+    img { max-width: 100%; height: auto; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.85rem; opacity: 0.7; }
+    ul, ol { padding-left: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid var(--border); padding: 0.5rem; text-align: left; }
+  </style>
+</head>
+<body>
+  <nav>
+    <strong><a href="/">{{ site_title }}</a></strong>
+    {{ for item in menu }}
+    <a href="/{{ item.url }}">{{ item.title }}</a>
+    {{ end }}
+    <a href="/tags.html">Tags</a>
+  </nav>
+
+  <main>
+    <article>
+      {{ content }}
+    </article>
+    {{ if tags && tags.size > 0 }}
+    <p><strong>Tags:</strong>
+      {{ for tag in tags }}
+      <a href="{{ tag.url }}" rel="tag">{{ tag.name }}</a>
+      {{ end }}
+    </p>
+    {{ end }}
+  </main>
+
+  <footer>&copy; 2024 {{ site_title }}</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+
+  {{ if analytics_snippet && analytics_snippet != '' }}{{ analytics_snippet }}{{ end }}
+</body>
+</html>

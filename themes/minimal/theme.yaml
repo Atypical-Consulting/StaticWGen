@@ -1,0 +1,8 @@
+name: Minimal
+description: Lightweight, text-focused theme with no CSS framework
+author: StaticWGen
+version: 1.0.0
+supports:
+  - dark-mode
+  - syntax-highlighting
+  - mermaid
