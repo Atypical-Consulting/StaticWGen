@@ -110,39 +110,93 @@ public interface IGenerateTagPages : IHasWebsitePaths
 
     private void GenerateIndividualTagPages(Dictionary<string, List<TaggedPage>> tagMap, string templateContent, List<TagMenuItem> menu)
     {
+        var postsPerPage = 10;
+
         foreach (var (tag, pages) in tagMap)
         {
             var sortedPages = pages.OrderByDescending(p => p.Date).ToList();
+            var totalPages = (int)Math.Ceiling((double)sortedPages.Count / postsPerPage);
 
-            var contentHtml = $"<h1>Posts tagged \"{tag}\"</h1>\n<ul>\n";
-            foreach (var page in sortedPages)
+            for (var page = 1; page <= totalPages; page++)
             {
-                var dateDisplay = !string.IsNullOrEmpty(page.Date) ? $" ({page.Date})" : "";
-                contentHtml += $"  <li><a href=\"{page.Url}\">{page.Title}</a>{dateDisplay}</li>\n";
+                var pagePosts = sortedPages
+                    .Skip((page - 1) * postsPerPage)
+                    .Take(postsPerPage)
+                    .ToList();
+
+                var contentHtml = $"<h1>Posts tagged \"{tag}\"{(page > 1 ? $" — Page {page}" : "")}</h1>\n<ul>\n";
+                foreach (var post in pagePosts)
+                {
+                    var dateDisplay = !string.IsNullOrEmpty(post.Date) ? $" ({post.Date})" : "";
+                    contentHtml += $"  <li><a href=\"{post.Url}\">{post.Title}</a>{dateDisplay}</li>\n";
+                }
+                contentHtml += "</ul>\n";
+
+                // Pagination nav
+                if (totalPages > 1)
+                {
+                    var basePath = $"/tags/{Uri.EscapeDataString(tag)}";
+                    var prevUrl = page > 1
+                        ? (page == 2 ? $"{basePath}.html" : $"{basePath}/page/{page - 1}.html")
+                        : "";
+                    var nextUrl = page < totalPages ? $"{basePath}/page/{page + 1}.html" : "";
+
+                    contentHtml += "<nav aria-label=\"Pagination\" style=\"margin-top: 1rem;\">\n";
+                    contentHtml += "  <ul style=\"display: flex; justify-content: center; gap: 1rem; list-style: none; padding: 0;\">\n";
+                    contentHtml += !string.IsNullOrEmpty(prevUrl)
+                        ? $"    <li><a href=\"{prevUrl}\">&laquo; Previous</a></li>\n"
+                        : "    <li><span aria-disabled=\"true\" style=\"opacity: 0.5;\">&laquo; Previous</span></li>\n";
+                    contentHtml += $"    <li>Page {page} of {totalPages}</li>\n";
+                    contentHtml += !string.IsNullOrEmpty(nextUrl)
+                        ? $"    <li><a href=\"{nextUrl}\">Next &raquo;</a></li>\n"
+                        : "    <li><span aria-disabled=\"true\" style=\"opacity: 0.5;\">Next &raquo;</span></li>\n";
+                    contentHtml += "  </ul>\n</nav>\n";
+                }
+
+                contentHtml += "<p><a href=\"/tags.html\">&larr; All tags</a></p>";
+
+                var escapedTag = Uri.EscapeDataString(tag);
+                var pageUrl = page == 1
+                    ? $"{SiteBaseUrl.TrimEnd('/')}/tags/{escapedTag}.html"
+                    : $"{SiteBaseUrl.TrimEnd('/')}/tags/{escapedTag}/page/{page}.html";
+
+                var templateData = new
+                {
+                    site_title = SiteTitle,
+                    page_title = page == 1 ? $"Tag: {tag}" : $"Tag: {tag} — Page {page}",
+                    description = $"Posts tagged with {tag}",
+                    keywords = tag,
+                    author = "",
+                    date = "",
+                    iso_date = "",
+                    og_type = "website",
+                    schema_type = "WebPage",
+                    content = contentHtml,
+                    toc = "",
+                    page_url = pageUrl,
+                    canonical_url = pageUrl,
+                    image_url = "",
+                    menu,
+                    tags = Array.Empty<object>()
+                };
+
+                var finalHtml = Template.Parse(templateContent).Render(templateData);
+
+                if (page == 1)
+                {
+                    var outputFile = OutputDirectory / "tags" / $"{tag}.html";
+                    outputFile.WriteAllText(finalHtml);
+                    Information("Generated tag page: {File}", outputFile);
+                }
+                else
+                {
+                    var pageDir = OutputDirectory / "tags" / tag / "page";
+                    pageDir.CreateDirectory();
+                    var outputFile = pageDir / $"{page}.html";
+                    outputFile.WriteAllText(finalHtml);
+                    Information("Generated tag page {Tag} page {Page}: {File}", tag, page, outputFile);
+                }
             }
-            contentHtml += "</ul>\n";
-            contentHtml += "<p><a href=\"/tags.html\">&larr; All tags</a></p>";
-
-            var templateData = new
-            {
-                site_title = SiteTitle,
-                page_title = $"Tag: {tag}",
-                description = $"Posts tagged with {tag}",
-                keywords = tag,
-                author = "",
-                date = "",
-                content = contentHtml,
-                page_url = $"{SiteBaseUrl.TrimEnd('/')}/tags/{Uri.EscapeDataString(tag)}.html",
-                image_url = "",
-                menu,
-                tags = Array.Empty<object>()
-            };
-
-            var finalHtml = Template.Parse(templateContent).Render(templateData);
-            var outputFile = OutputDirectory / "tags" / $"{tag}.html";
-            outputFile.WriteAllText(finalHtml);
-
-            Information("Generated tag page: {File}", outputFile);
         }
     }
 

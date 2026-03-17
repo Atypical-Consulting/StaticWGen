@@ -32,6 +32,7 @@
         "CopyCss",
         "CopyJsScripts",
         "DeployDockerImage",
+        "GenerateBlogIndex",
         "GenerateFeed",
         "GenerateHtml",
         "GenerateRobotsTxt",

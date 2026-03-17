@@ -76,6 +76,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
         .DependsOn<IRobotsTxt>(x => x.GenerateRobotsTxt)
         .DependsOn<IGenerateFeed>(x => x.GenerateFeed)
         .DependsOn<IGenerateTagPages>(x => x.GenerateTagPages)
+        .DependsOn<IGenerateBlogIndex>(x => x.GenerateBlogIndex)
         .Executes(() =>
         {
             // Add more logic if necessary, like bundling, minifying, etc.
