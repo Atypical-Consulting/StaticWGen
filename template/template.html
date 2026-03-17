@@ -11,12 +11,22 @@
   <link rel="stylesheet" href="css/prism.css">
   <title>{{ page_title }} - {{ site_title }}</title>
   <meta name="description" content="{{ description }}">
+  <!-- Canonical URL -->
+  <link rel="canonical" href="{{ canonical_url }}">
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="{{ page_title }} - {{ site_title }}">
   <meta property="og:description" content="{{ description }}">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:type" content="{{ og_type }}">
+  <meta property="og:url" content="{{ canonical_url }}">
   <meta property="og:image" content="{{ image_url }}">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="{{ site_title }}">
+  {{ if iso_date && iso_date != '' }}
+  <meta property="article:published_time" content="{{ iso_date }}">
+  {{ end }}
+  {{ if tags }}{{ for tag in tags }}
+  <meta property="article:tag" content="{{ tag.name }}">
+  {{ end }}{{ end }}
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ page_title }} - {{ site_title }}">
@@ -27,6 +37,22 @@
   <meta name="author" content="{{ author }}">
   <!-- Atom Feed Discovery -->
   <link rel="alternate" type="application/atom+xml" title="{{ site_title }} Feed" href="/feed.xml">
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "{{ schema_type }}",
+    "headline": "{{ page_title }}",
+    "description": "{{ description }}",
+    "url": "{{ canonical_url }}"{{ if iso_date && iso_date != '' }},
+    "datePublished": "{{ iso_date }}"{{ end }}{{ if image_url && image_url != '' }},
+    "image": "{{ image_url }}"{{ end }}{{ if author && author != '' }},
+    "author": {
+      "@type": "Person",
+      "name": "{{ author }}"
+    }{{ end }}
+  }
+  </script>
   <!-- Table of Contents Styles -->
   <style>
     /* Skip-to-content link */
