@@ -32,20 +32,42 @@ public static class MarkdownPipelineHelper
         var metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         var yamlBlock = document.Descendants<YamlFrontMatterBlock>().FirstOrDefault();
-        if (yamlBlock != null)
-        {
-            var yaml = content.Substring(yamlBlock.Span.Start, yamlBlock.Span.Length);
-            var input = new StringReader(yaml);
-            var yamlStream = new YamlStream();
-            yamlStream.Load(input);
+        if (yamlBlock == null)
+            return metadata;
 
-            var rootNode = (YamlMappingNode)yamlStream.Documents[0].RootNode;
-            foreach (var entry in rootNode.Children)
+        var yaml = content.Substring(yamlBlock.Span.Start, yamlBlock.Span.Length);
+        YamlStream yamlStream;
+        try
+        {
+            yamlStream = new YamlStream();
+            yamlStream.Load(new StringReader(yaml));
+        }
+        catch
+        {
+            return metadata;
+        }
+
+        if (yamlStream.Documents.Count == 0)
+            return metadata;
+
+        if (yamlStream.Documents[0].RootNode is not YamlMappingNode rootNode)
+            return metadata;
+
+        foreach (var entry in rootNode.Children)
+        {
+            if (entry.Key is not YamlScalarNode keyNode || string.IsNullOrEmpty(keyNode.Value))
+                continue;
+
+            var value = entry.Value switch
             {
-                var key = ((YamlScalarNode)entry.Key).Value!;
-                var value = ((YamlScalarNode)entry.Value).Value!;
-                metadata[key] = value;
-            }
+                YamlScalarNode scalar => scalar.Value ?? "",
+                YamlSequenceNode seq => string.Join(", ",
+                    seq.Children.OfType<YamlScalarNode>().Select(n => n.Value ?? "")),
+                _ => null
+            };
+
+            if (value != null)
+                metadata[keyNode.Value] = value;
         }
 
         return metadata;

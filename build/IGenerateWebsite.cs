@@ -121,7 +121,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
             var markdownDocument = Markdown.Parse(content, markdownPipeline);
 
             // Extract YAML front matter
-            var metadata = MarkdownHelper.ExtractMetadata(markdownDocument, content);
+            var metadata = MarkdownHelper.ExtractMetadata(markdownDocument, content, file.Name);
 
             // Remove the YAML front matter from the content
             var markdownContent = MarkdownHelper.RemoveFrontMatter(markdownDocument, content);
