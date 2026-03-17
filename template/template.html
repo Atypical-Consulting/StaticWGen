@@ -25,11 +25,24 @@
   <!-- Other meta tags -->
   <meta name="keywords" content="{{ keywords }}">
   <meta name="author" content="{{ author }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Atom Feed Discovery -->
   <link rel="alternate" type="application/atom+xml" title="{{ site_title }} Feed" href="/feed.xml">
   <!-- Table of Contents Styles -->
   <style>
+    /* Skip-to-content link */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      padding: 0.5rem 1rem;
+      z-index: 1000;
+      background: var(--pico-primary);
+      color: var(--pico-primary-inverse);
+      text-decoration: none;
+    }
+    .skip-link:focus {
+      top: 0;
+    }
     .table-of-contents {
       margin-bottom: 2rem;
       padding: 1rem;
@@ -79,9 +92,12 @@
   </style>
 </head>
 <body>
+  <!-- Skip to content link for keyboard users -->
+  <a href="#main-content" class="skip-link">Skip to content</a>
+
   <!-- Header -->
   <header class="container">
-    <nav>
+    <nav aria-label="Primary navigation">
       <ul>
         <li><strong><a href="/">{{ site_title }}</a></strong></li>
       </ul>
@@ -92,11 +108,11 @@
         <li><a href="/tags.html">Tags</a></li>
         <li>
           <details class="dropdown">
-            <summary role="button" class="secondary">Theme</summary>
-            <ul>
-              <li><a href="#" data-theme-switcher="auto">Auto</a></li>
-              <li><a href="#" data-theme-switcher="light">Light</a></li>
-              <li><a href="#" data-theme-switcher="dark">Dark</a></li>
+            <summary role="button" class="secondary" aria-label="Switch theme">Theme</summary>
+            <ul role="listbox" aria-label="Theme options">
+              <li><a href="#" data-theme-switcher="auto" role="option">Auto</a></li>
+              <li><a href="#" data-theme-switcher="light" role="option">Light</a></li>
+              <li><a href="#" data-theme-switcher="dark" role="option">Dark</a></li>
             </ul>
           </details>
         </li>
@@ -105,10 +121,10 @@
   </header>
 
   <!-- Main -->
-  <main class="container {{ if toc && toc != '' }}has-toc{{ end }}">
-    <div class="page-content">
+  <main id="main-content" class="container {{ if toc && toc != '' }}has-toc{{ end }}">
+    <article class="page-content">
     {{ content }}
-    </div>
+    </article>
     {{ if toc && toc != '' }}
     {{ toc }}
     {{ end }}
@@ -116,7 +132,7 @@
     <nav aria-label="Tags">
       <p><strong>Tags:</strong>
         {{ for tag in tags }}
-        <a href="{{ tag.url }}" style="display: inline-block; padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.25rem;">{{ tag.name }}</a>
+        <a href="{{ tag.url }}" rel="tag" style="display: inline-block; padding: 0.15rem 0.5rem; border-radius: 1rem; font-size: 0.85rem; text-decoration: none; margin-right: 0.25rem;">{{ tag.name }}</a>
         {{ end }}
       </p>
     </nav>
@@ -124,7 +140,7 @@
   </main>
 
   <!-- Footer -->
-  <footer class="container">
+  <footer class="container" role="contentinfo">
     <small>© 2024 {{ site_title }}</small>
   </footer>
 
@@ -133,7 +149,7 @@
 
   <!-- Modal -->
   <script src="js/modal.js"></script>
-  
+
   <!-- Prism.js -->
   <script src="js/prism.js"></script>
 
@@ -168,6 +184,21 @@
       }
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
+    })();
+  </script>
+
+  <!-- Theme switcher keyboard accessibility -->
+  <script>
+    (function() {
+      var switchers = document.querySelectorAll('[data-theme-switcher]');
+      switchers.forEach(function(el) {
+        el.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            el.click();
+          }
+        });
+      });
     })();
   </script>
 </body>
