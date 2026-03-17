@@ -168,18 +168,38 @@ public interface IGenerateWebsite : IHasWebsitePaths
                 .ToList();
         }
 
+        var pageTitle = metadata.TryGetValue("title", out var title) ? title : file.NameWithoutExtension;
+        var pageDescription = metadata.TryGetValue("description", out var description) ? description : "";
+        var pageAuthor = metadata.TryGetValue("author", out var author) ? author : "";
+        var pageDate = metadata.TryGetValue("date", out var date) ? date : "";
+        var pageImage = metadata.TryGetValue("image", out var image) ? image : DefaultImageUrl;
+
+        // Determine content type based on presence of date metadata
+        var hasDate = !string.IsNullOrEmpty(pageDate);
+        var ogType = hasDate ? "article" : "website";
+        var schemaType = hasDate ? "BlogPosting" : "WebPage";
+
+        // Format date for ISO 8601 (JSON-LD / article:published_time)
+        var isoDate = "";
+        if (hasDate && DateTime.TryParse(pageDate, out var parsedDate))
+            isoDate = parsedDate.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
         var templateData = new
         {
             site_title = SiteTitle,
-            page_title = metadata.TryGetValue("title", out var title) ? title : file.NameWithoutExtension,
-            description = metadata.TryGetValue("description", out var description) ? description : "",
+            page_title = pageTitle,
+            description = pageDescription,
             keywords = keywordsStr ?? "",
-            author = metadata.TryGetValue("author", out var author) ? author : "",
-            date = metadata.TryGetValue("date", out var date) ? date : "",
+            author = pageAuthor,
+            date = pageDate,
+            iso_date = isoDate,
+            og_type = ogType,
+            schema_type = schemaType,
             content = htmlContent,
             toc = tocHtml,
             page_url = pageUrl,
-            image_url = metadata.TryGetValue("image", out var image) ? image : DefaultImageUrl,
+            canonical_url = pageUrl,
+            image_url = pageImage,
             menu,
             tags
         };
