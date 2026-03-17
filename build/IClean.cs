@@ -7,6 +7,7 @@ using static Serilog.Log;
 public interface IClean : IHasWebsitePaths
 {
     Target Clean => _ => _
+        .DependsOn<IValidateConfig>(x => x.ValidateConfig)
         .Executes(() =>
         {
             Information("Cleaning output directory...");
