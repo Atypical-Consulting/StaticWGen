@@ -107,9 +107,11 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
         {
             var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
 
-            // Skip drafts, scheduled, and excluded content
+            // Skip drafts, scheduled, excluded, and translation files
             var status = MarkdownHelper.GetContentStatus(metadata);
             if (status == ContentStatus.Excluded)
+                continue;
+            if (metadata.ContainsKey("translationOf") && file.NameWithoutExtension.Contains('.'))
                 continue;
 
             if (!metadata.TryGetValue("date", out var dateStr) || string.IsNullOrEmpty(dateStr))
@@ -172,7 +174,8 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
                 Title = file.NameWithoutExtension,
                 Url = $"{file.NameWithoutExtension}.html"
             })
-            .Where(item => item.Url != "index.html" && item.Url != "404.html")
+            .Where(item => item.Url != "index.html" && item.Url != "404.html" &&
+                           !item.Title.Contains('.'))
             .ToList();
     }
 

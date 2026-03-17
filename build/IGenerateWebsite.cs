@@ -201,8 +201,9 @@ public interface IGenerateWebsite : IHasWebsitePaths
                 Title = file.NameWithoutExtension,
                 Url = $"{file.NameWithoutExtension}.html"
             })
-            // exclude index.html and 404.html from the menu
-            .Where(item => item.Url != "index.html" && item.Url != "404.html")
+            // exclude index.html, 404.html, and translation files from the menu
+            .Where(item => item.Url != "index.html" && item.Url != "404.html" &&
+                           !item.Title.Contains('.'))
             .ToList();
         
         return menu;
@@ -261,14 +262,17 @@ public interface IGenerateWebsite : IHasWebsitePaths
                 .Render(templateData);
 
             // Determine output path based on language
+            // Only translation files (e.g., about.fr.md) go to /{lang}/ subdirectory
             var lang = metadata.TryGetValue("lang", out var l) ? l : "";
+            var isTranslationFile = !string.IsNullOrEmpty(lang) &&
+                                    metadata.ContainsKey("translationOf") &&
+                                    file.NameWithoutExtension.Contains('.');
             AbsolutePath outputFile;
-            if (!string.IsNullOrEmpty(lang))
+            if (isTranslationFile)
             {
                 var langDir = OutputDirectory / lang;
                 langDir.CreateDirectory();
-                // Use translationOf as filename if available, else original name
-                var baseName = metadata.TryGetValue("translationOf", out var tOf) ? tOf : file.NameWithoutExtension;
+                var baseName = metadata["translationOf"];
                 outputFile = langDir / $"{baseName}.html";
             }
             else

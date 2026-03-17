@@ -3,7 +3,7 @@ title: "À propos de cette démo"
 description: "En savoir plus sur ce site de démonstration et les outils utilisés."
 author: "Philippe Matray"
 date: "2024-09-13"
-keywords: "à propos, démo, nuke, pico css"
+keywords: "about, demo, nuke, pico css"
 image: "./assets/logo-wgen.webp"
 lang: fr
 translationOf: about
