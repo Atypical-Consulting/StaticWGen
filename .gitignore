@@ -1,6 +1,7 @@
 external
 nuke-global.*
 .env
+build-report.json
 
 # Build Folders (you can keep bin if you'd like, to store dlls and pdbs)
 [Bb]in/
