@@ -36,7 +36,8 @@
         "GenerateHtml",
         "GenerateRobotsTxt",
         "GenerateSitemap",
-        "GenerateTagPages"
+        "GenerateTagPages",
+        "Validate"
       ]
     },
     "Verbosity": {
