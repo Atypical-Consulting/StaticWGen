@@ -105,15 +105,8 @@ public interface IGenerateWebsite : IHasWebsitePaths
 
             var content = file.ReadAllText();
 
-            // Use advanced extensions for Markdown processing
-            // Math must be registered before Emoji to prevent emoji from matching inside math delimiters
-            var markdownPipeline = new MarkdownPipelineBuilder()
-                .UseYamlFrontMatter()
-                .UseMathematics()
-                .UseEmojiAndSmiley()
-                .UseSmartyPants()
-                .UseAdvancedExtensions()
-                .Build();
+            // Use shared pipeline with all extensions
+            var markdownPipeline = MarkdownHelper.CreatePipeline();
 
             // Register custom code block renderer that handles Mermaid and Prism together
             var writer = new StringWriter();
@@ -128,10 +121,10 @@ public interface IGenerateWebsite : IHasWebsitePaths
             var markdownDocument = Markdown.Parse(content, markdownPipeline);
 
             // Extract YAML front matter
-            var metadata = ExtractMetadata(markdownDocument, content);
+            var metadata = MarkdownHelper.ExtractMetadata(markdownDocument, content);
 
             // Remove the YAML front matter from the content
-            var markdownContent = RemoveFrontMatter(markdownDocument, content);
+            var markdownContent = MarkdownHelper.RemoveFrontMatter(markdownDocument, content);
 
             // Convert Markdown to HTML using custom renderer
             var markdownDoc2 = Markdown.Parse(markdownContent, markdownPipeline);
@@ -162,42 +155,6 @@ public interface IGenerateWebsite : IHasWebsitePaths
         }
     }
 
-    private static Dictionary<string, string> ExtractMetadata(MarkdownDocument markdownDocument, string content)
-    {
-        var metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                
-        var yamlBlock = markdownDocument.Descendants<YamlFrontMatterBlock>().FirstOrDefault();
-        if (yamlBlock != null)
-        {
-            var yaml = content.Substring(yamlBlock.Span.Start, yamlBlock.Span.Length);
-            var input = new StringReader(yaml);
-            var yamlStream = new YamlStream();
-            yamlStream.Load(input);
-
-            var rootNode = (YamlMappingNode)yamlStream.Documents[0].RootNode;
-            foreach (var entry in rootNode.Children)
-            {
-                var key = ((YamlScalarNode)entry.Key).Value;
-                var value = ((YamlScalarNode)entry.Value).Value;
-                metadata[key] = value;
-            }
-        }
-
-        return metadata;
-    }
-    
-    private string RemoveFrontMatter(MarkdownDocument markdownDocument, string content)
-    {
-        var yamlBlock = markdownDocument.Descendants<YamlFrontMatterBlock>().FirstOrDefault();
-        if (yamlBlock != null)
-        {
-            var contentStart = yamlBlock.Span.End + 1;
-            return content.Substring(contentStart).TrimStart();
-        }
-        
-        return content;
-    }
-    
     private object PrepareTemplateData(AbsolutePath file, Dictionary<string, string> metadata, string htmlContent, string tocHtml, List<MenuItem> menu)
     {
         var pageUrl = new Uri(new Uri(SiteBaseUrl.TrimEnd('/') + "/"), $"{file.NameWithoutExtension}.html").AbsoluteUri;

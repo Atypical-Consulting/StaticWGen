@@ -1,14 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using Markdig;
-using Markdig.Extensions.Yaml;
-using Markdig.Syntax;
 using Nuke.Common;
 using Nuke.Common.IO;
 using Scriban;
-using YamlDotNet.RepresentationModel;
 using static Serilog.Log;
 
 public interface IGenerateTagPages : IHasWebsitePaths
@@ -50,10 +45,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
 
         foreach (var file in markdownFiles)
         {
-            var content = file.ReadAllText();
-            var pipeline = new MarkdownPipelineBuilder().UseYamlFrontMatter().Build();
-            var document = Markdown.Parse(content, pipeline);
-            var metadata = ExtractTagMetadata(document, content);
+            var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
 
             if (!metadata.TryGetValue("keywords", out var keywordsStr) || string.IsNullOrWhiteSpace(keywordsStr))
                 continue;
@@ -167,30 +159,6 @@ public interface IGenerateTagPages : IHasWebsitePaths
             .ToList();
 
         return menu;
-    }
-
-    private static Dictionary<string, string> ExtractTagMetadata(MarkdownDocument document, string content)
-    {
-        var metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-        var yamlBlock = document.Descendants<YamlFrontMatterBlock>().FirstOrDefault();
-        if (yamlBlock != null)
-        {
-            var yaml = content.Substring(yamlBlock.Span.Start, yamlBlock.Span.Length);
-            var input = new StringReader(yaml);
-            var yamlStream = new YamlStream();
-            yamlStream.Load(input);
-
-            var rootNode = (YamlMappingNode)yamlStream.Documents[0].RootNode;
-            foreach (var entry in rootNode.Children)
-            {
-                var key = ((YamlScalarNode)entry.Key).Value;
-                var value = ((YamlScalarNode)entry.Value).Value;
-                metadata[key] = value;
-            }
-        }
-
-        return metadata;
     }
 
     record TaggedPage
