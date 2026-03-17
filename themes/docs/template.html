@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title }} - {{ site_title }}</title>
+  <meta name="description" content="{{ description }}">
+  {{ if noindex }}<meta name="robots" content="noindex, nofollow">{{ end }}
+  <link rel="canonical" href="{{ canonical_url }}">
+  <meta property="og:title" content="{{ page_title }} - {{ site_title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:type" content="{{ og_type }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta name="author" content="{{ author }}">
+  <link rel="alternate" type="application/atom+xml" title="{{ site_title }} Feed" href="/feed.xml">
+  <style>
+    :root { --bg: #fff; --fg: #1a1a2e; --sidebar-bg: #f8f9fa; --link: #0969da; --border: #d1d5db; --accent: #0969da; --code-bg: #f6f8fa; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0d1117; --fg: #c9d1d9; --sidebar-bg: #161b22; --link: #58a6ff; --border: #30363d; --accent: #58a6ff; --code-bg: #161b22; }
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.6; }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
+    .sidebar { background: var(--sidebar-bg); border-right: 1px solid var(--border); padding: 1.5rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar h2 { font-size: 1.1rem; margin-bottom: 1rem; }
+    .sidebar ul { list-style: none; }
+    .sidebar li { margin: 0.25rem 0; }
+    .sidebar a { display: block; padding: 0.25rem 0.5rem; border-radius: 4px; color: var(--fg); font-size: 0.9rem; }
+    .sidebar a:hover { background: var(--border); text-decoration: none; }
+    .content { padding: 2rem 3rem; max-width: 900px; }
+    .content h1 { font-size: 2rem; margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    .content h2 { margin-top: 2rem; }
+    .content h3 { margin-top: 1.5rem; }
+    pre { background: var(--code-bg); padding: 1rem; overflow-x: auto; border-radius: 6px; margin: 1rem 0; border: 1px solid var(--border); }
+    code { font-family: 'SF Mono', SFMono-Regular, Consolas, monospace; font-size: 0.85em; }
+    img { max-width: 100%; height: auto; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: var(--sidebar-bg); }
+    .breadcrumb { font-size: 0.85rem; margin-bottom: 1rem; opacity: 0.7; }
+    footer { padding: 1rem 3rem; border-top: 1px solid var(--border); font-size: 0.85rem; opacity: 0.6; }
+    .tags { margin-top: 2rem; }
+    .tags a { display: inline-block; padding: 0.15rem 0.5rem; border: 1px solid var(--border); border-radius: 1rem; font-size: 0.8rem; margin-right: 0.25rem; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2><a href="/" style="color: var(--fg);">{{ site_title }}</a></h2>
+      <nav aria-label="Sidebar navigation">
+        <ul>
+          {{ for item in menu }}
+          <li><a href="/{{ item.url }}">{{ item.title }}</a></li>
+          {{ end }}
+          <li><a href="/tags.html">Tags</a></li>
+          <li><a href="/blog.html">Blog</a></li>
+        </ul>
+      </nav>
+      {{ if toc && toc != '' }}
+      <hr style="margin: 1rem 0; border-color: var(--border);">
+      {{ toc }}
+      {{ end }}
+    </aside>
+
+    <div>
+      <main class="content">
+        <article>
+          {{ content }}
+        </article>
+        {{ if tags && tags.size > 0 }}
+        <div class="tags">
+          <strong>Tags:</strong>
+          {{ for tag in tags }}
+          <a href="{{ tag.url }}" rel="tag">{{ tag.name }}</a>
+          {{ end }}
+        </div>
+        {{ end }}
+      </main>
+
+      <footer>&copy; 2024 {{ site_title }}</footer>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true });</script>
+
+  {{ if analytics_snippet && analytics_snippet != '' }}{{ analytics_snippet }}{{ end }}
+</body>
+</html>

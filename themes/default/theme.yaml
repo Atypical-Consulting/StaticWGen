@@ -1,0 +1,10 @@
+name: Default
+description: Clean, modern theme based on Pico CSS with dark mode support
+author: StaticWGen
+version: 1.0.0
+supports:
+  - dark-mode
+  - syntax-highlighting
+  - mermaid
+  - table-of-contents
+  - search

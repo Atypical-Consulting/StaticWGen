@@ -1,0 +1,10 @@
+name: Docs
+description: Documentation-oriented theme with sidebar navigation
+author: StaticWGen
+version: 1.0.0
+supports:
+  - dark-mode
+  - syntax-highlighting
+  - mermaid
+  - table-of-contents
+  - search
