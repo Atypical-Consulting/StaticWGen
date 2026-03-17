@@ -71,3 +71,19 @@ sequenceDiagram
 ```
 
 Everything should render correctly! :tada:
+
+## Plugin Shortcodes
+
+### YouTube Embed
+
+{{youtube:dQw4w9WgXcQ}}
+
+### Alert Boxes
+
+{{alert:info}}This is an informational message.{{/alert}}
+
+{{alert:warning}}Be careful with this operation!{{/alert}}
+
+{{alert:success}}The operation completed successfully.{{/alert}}
+
+{{alert:danger}}This action cannot be undone!{{/alert}}

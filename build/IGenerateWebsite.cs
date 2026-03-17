@@ -243,6 +243,9 @@ public interface IGenerateWebsite : IHasWebsitePaths
             writer.Flush();
             var htmlContent = writer.ToString();
 
+            // Apply content transformer plugins
+            htmlContent = ContentTransformerPipeline.Apply(htmlContent, metadata);
+
             // Generate Table of Contents
             var tocHtml = GenerateTableOfContents(htmlContent, metadata);
 
