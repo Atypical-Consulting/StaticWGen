@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1" name="viewport">
@@ -14,6 +14,9 @@
   {{ if noindex }}<meta name="robots" content="noindex, nofollow">
   {{ end }}<!-- Canonical URL -->
   <link rel="canonical" href="{{ canonical_url }}">
+  {{ if hreflang_links && hreflang_links.size > 0 }}{{ for link in hreflang_links }}
+  <link rel="alternate" hreflang="{{ link.lang }}" href="{{ link.href }}">
+  {{ end }}{{ end }}
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="{{ page_title }} - {{ site_title }}">
   <meta property="og:description" content="{{ description }}">
@@ -133,6 +136,18 @@
         <li><a href="/{{ item.url }}">{{ item.title }}</a></li>
         {{ end }}
         <li><a href="/tags.html">Tags</a></li>
+        {{ if hreflang_links && hreflang_links.size > 1 }}
+        <li>
+          <details class="dropdown">
+            <summary role="button" class="secondary" aria-label="Switch language">{{ lang | string.upcase }}</summary>
+            <ul role="listbox" aria-label="Language options">
+              {{ for link in hreflang_links }}{{ if link.lang != 'x-default' }}
+              <li><a href="{{ link.href }}" role="option" hreflang="{{ link.lang }}"{{ if link.lang == lang }} aria-current="true"{{ end }}>{{ link.lang | string.upcase }}</a></li>
+              {{ end }}{{ end }}
+            </ul>
+          </details>
+        </li>
+        {{ end }}
         <li>
           <details class="dropdown">
             <summary role="button" class="secondary" aria-label="Switch theme">Theme</summary>

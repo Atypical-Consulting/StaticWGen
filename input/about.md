@@ -5,6 +5,8 @@ author: "Philippe Matray"
 date: "2024-09-13"
 keywords: "about, demo, nuke, pico css"
 image: "./assets/logo-wgen.webp"
+lang: en
+translationOf: about
 ---
 # About This Demo
 
