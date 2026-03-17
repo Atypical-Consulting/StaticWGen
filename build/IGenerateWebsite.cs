@@ -24,23 +24,85 @@ public interface IGenerateWebsite : IHasWebsitePaths
     [Parameter("Default image URL for social sharing")]
     string DefaultImageUrl => TryGetValue(() => DefaultImageUrl) ?? "";
     
+    [Parameter("Include draft pages in output")]
+    bool IncludeDrafts => TryGetValue<bool?>(() => IncludeDrafts) ?? false;
+
     Target GenerateHtml => _ => _
         .DependsOn<IClean>(x => x.Clean)
         .Executes(() =>
         {
             Information("Generating HTML files from Markdown...");
-            
+
             var template = TemplateDirectory / "template.html";
             var templateContent = template.ReadAllText();
-            
-            // Step 1: Get all Markdown files and generate menu dynamically
+
+            // Step 1: Get all Markdown files and filter by content status
             var markdownFiles = InputDirectory.GlobFiles("**/*.md");
-            var menu = GenerateMenu(markdownFiles);
-            
-            // Step 2: Generate HTML for each Markdown file
-            markdownFiles.ForEach(file => ProcessMarkdownFile(file, templateContent, menu));
-            
-            Information("HTML files generated successfully!");
+            var publishableFiles = new List<AbsolutePath>();
+            var draftCount = 0;
+            var scheduledCount = 0;
+            var archivedCount = 0;
+
+            foreach (var file in markdownFiles)
+            {
+                var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+                var status = MarkdownHelper.GetContentStatus(metadata, IncludeDrafts);
+
+                switch (status)
+                {
+                    case ContentStatus.Excluded:
+                        if (metadata.TryGetValue("draft", out var isDraft) &&
+                            string.Equals(isDraft, "true", StringComparison.OrdinalIgnoreCase))
+                        {
+                            draftCount++;
+                            Information("Skipping draft: {File}", file.Name);
+                        }
+                        else if (metadata.TryGetValue("publishDate", out var pubDate))
+                        {
+                            scheduledCount++;
+                            Information("Skipping scheduled post: {File} (publishes {Date})", file.Name, pubDate);
+                        }
+                        continue;
+                    case ContentStatus.Draft:
+                        draftCount++;
+                        Information("Including draft (--include-drafts): {File}", file.Name);
+                        break;
+                    case ContentStatus.Scheduled:
+                        scheduledCount++;
+                        Information("Including scheduled post (--include-drafts): {File}", file.Name);
+                        break;
+                    case ContentStatus.Archived:
+                        archivedCount++;
+                        break;
+                }
+
+                publishableFiles.Add(file);
+            }
+
+            // Step 2: Generate menu from publishable, non-archived files
+            var menuFiles = publishableFiles
+                .Where(f =>
+                {
+                    var (m, _) = MarkdownHelper.ParseMarkdownFile(f);
+                    return MarkdownHelper.GetContentStatus(m) != ContentStatus.Archived;
+                })
+                .ToList();
+            var menu = GenerateMenu(menuFiles);
+
+            // Step 3: Generate HTML for each publishable file
+            publishableFiles.ForEach(file => ProcessMarkdownFile(file, templateContent, menu));
+
+            var publishedCount = publishableFiles.Count - archivedCount;
+            Information("Build Summary:");
+            Information("  Published: {Count} pages", publishedCount);
+            if (draftCount > 0)
+                Information("  Drafts:    {Count} pages {Status}", draftCount,
+                    IncludeDrafts ? "(included via --include-drafts)" : "(skipped)");
+            if (scheduledCount > 0)
+                Information("  Scheduled: {Count} pages {Status}", scheduledCount,
+                    IncludeDrafts ? "(included via --include-drafts)" : "(skipped)");
+            if (archivedCount > 0)
+                Information("  Archived:  {Count} pages", archivedCount);
         });
 
     Target CopyAssets => _ => _

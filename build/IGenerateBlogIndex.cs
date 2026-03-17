@@ -107,6 +107,11 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
         {
             var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
 
+            // Skip drafts, scheduled, and excluded content
+            var status = MarkdownHelper.GetContentStatus(metadata);
+            if (status == ContentStatus.Excluded)
+                continue;
+
             if (!metadata.TryGetValue("date", out var dateStr) || string.IsNullOrEmpty(dateStr))
                 continue;
 
@@ -157,6 +162,11 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
     {
         var markdownFiles = InputDirectory.GlobFiles("**/*.md");
         return markdownFiles
+            .Where(file =>
+            {
+                var (m, _) = MarkdownHelper.ParseMarkdownFile(file);
+                return MarkdownHelper.GetContentStatus(m) != ContentStatus.Excluded;
+            })
             .Select(file => new IndexMenuItem
             {
                 Title = file.NameWithoutExtension,

@@ -53,6 +53,11 @@ public interface IGenerateFeed : IHasWebsitePaths
         {
             var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
 
+            // Skip drafts, scheduled, excluded, and archived content from feed
+            var status = MarkdownHelper.GetContentStatus(metadata);
+            if (status != ContentStatus.Published)
+                continue;
+
             if (!metadata.TryGetValue("date", out var dateStr))
                 continue;
 

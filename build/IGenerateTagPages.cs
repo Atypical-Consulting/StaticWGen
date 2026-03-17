@@ -47,6 +47,11 @@ public interface IGenerateTagPages : IHasWebsitePaths
         {
             var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
 
+            // Skip drafts, scheduled, and excluded content
+            var status = MarkdownHelper.GetContentStatus(metadata);
+            if (status == ContentStatus.Excluded)
+                continue;
+
             if (!metadata.TryGetValue("keywords", out var keywordsStr) || string.IsNullOrWhiteSpace(keywordsStr))
                 continue;
 
@@ -204,6 +209,11 @@ public interface IGenerateTagPages : IHasWebsitePaths
     {
         var markdownFiles = InputDirectory.GlobFiles("**/*.md");
         var menu = markdownFiles
+            .Where(file =>
+            {
+                var (m, _) = MarkdownHelper.ParseMarkdownFile(file);
+                return MarkdownHelper.GetContentStatus(m) != ContentStatus.Excluded;
+            })
             .Select(file => new TagMenuItem
             {
                 Title = file.NameWithoutExtension,
