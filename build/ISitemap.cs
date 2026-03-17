@@ -18,6 +18,7 @@ public interface ISitemap : IHasWebsitePaths
             var baseUrl = SiteBaseUrl.TrimEnd('/'); // You need to define SiteBaseUrl
 
             var urls = OutputDirectory.GlobFiles("**/*.html")
+                .Where(file => file.Name != "404.html") // Exclude error pages from sitemap
                 .Select(file =>
                 {
                     var relativePath = OutputDirectory.GetRelativePathTo(file).ToString().Replace('\\', '/');

@@ -209,7 +209,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
                 Title = file.NameWithoutExtension,
                 Url = $"{file.NameWithoutExtension}.html"
             })
-            .Where(item => item.Url != "index.html")
+            .Where(item => item.Url != "index.html" && item.Url != "404.html")
             .ToList();
 
         return menu;
