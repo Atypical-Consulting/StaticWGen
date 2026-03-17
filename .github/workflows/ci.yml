@@ -45,14 +45,14 @@ jobs:
           find output -type f | sort
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: website-output
           path: output/
           retention-days: 7
 
       - name: Upload build report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: build-report
