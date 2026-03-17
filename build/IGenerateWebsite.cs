@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Extensions.Yaml;
 using Markdig.Prism;
@@ -138,8 +139,11 @@ public interface IGenerateWebsite : IHasWebsitePaths
             writer.Flush();
             var htmlContent = writer.ToString();
 
+            // Generate Table of Contents
+            var tocHtml = GenerateTableOfContents(htmlContent, metadata);
+
             // Prepare data for the template
-            var templateData = PrepareTemplateData(file, metadata, htmlContent, menu);
+            var templateData = PrepareTemplateData(file, metadata, htmlContent, tocHtml, menu);
 
             // Replace placeholders in the template
             var finalHtml = Template
@@ -194,7 +198,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
         return content;
     }
     
-    private object PrepareTemplateData(AbsolutePath file, Dictionary<string, string> metadata, string htmlContent, List<MenuItem> menu)
+    private object PrepareTemplateData(AbsolutePath file, Dictionary<string, string> metadata, string htmlContent, string tocHtml, List<MenuItem> menu)
     {
         var pageUrl = new Uri(new Uri(SiteBaseUrl.TrimEnd('/') + "/"), $"{file.NameWithoutExtension}.html").AbsoluteUri;
 
@@ -216,6 +220,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
             author = metadata.TryGetValue("author", out var author) ? author : "",
             date = metadata.TryGetValue("date", out var date) ? date : "",
             content = htmlContent,
+            toc = tocHtml,
             page_url = pageUrl,
             image_url = metadata.TryGetValue("image", out var image) ? image : DefaultImageUrl,
             menu,
@@ -223,6 +228,76 @@ public interface IGenerateWebsite : IHasWebsitePaths
         };
 
         return templateData;
+    }
+
+    private static string GenerateTableOfContents(string htmlContent, Dictionary<string, string> metadata)
+    {
+        // Check if TOC is explicitly disabled
+        if (metadata.TryGetValue("toc", out var tocSetting) &&
+            string.Equals(tocSetting, "false", StringComparison.OrdinalIgnoreCase))
+            return "";
+
+        // Get max depth (default: 3 = h2-h4)
+        var maxDepth = 3;
+        if (metadata.TryGetValue("toc_depth", out var depthStr) && int.TryParse(depthStr, out var depth))
+            maxDepth = Math.Clamp(depth, 1, 4);
+
+        var minLevel = 2; // Start from h2
+        var maxLevel = minLevel + maxDepth - 1; // e.g., h2-h4 for depth=3
+
+        // Parse headings from HTML
+        var headingPattern = $@"<h([{minLevel}-{maxLevel}])\s+id=""([^""]+)""[^>]*>(.*?)</h\1>";
+        var matches = Regex.Matches(htmlContent, headingPattern, RegexOptions.Singleline);
+
+        if (matches.Count < 3 && !string.Equals(tocSetting, "true", StringComparison.OrdinalIgnoreCase))
+            return ""; // Auto-mode: skip TOC for pages with fewer than 3 headings
+
+        if (matches.Count == 0)
+            return "";
+
+        var tocBuilder = new System.Text.StringBuilder();
+        tocBuilder.AppendLine("<nav class=\"table-of-contents\" aria-label=\"Table of contents\">");
+        tocBuilder.AppendLine("  <details open>");
+        tocBuilder.AppendLine("    <summary>Contents</summary>");
+
+        var currentLevel = minLevel;
+        var listsOpen = 0;
+
+        tocBuilder.AppendLine("    <ul>");
+        listsOpen++;
+
+        foreach (Match match in matches)
+        {
+            var level = int.Parse(match.Groups[1].Value);
+            var id = match.Groups[2].Value;
+            var text = Regex.Replace(match.Groups[3].Value, "<[^>]+>", "").Trim(); // Strip inner HTML tags
+
+            while (level > currentLevel)
+            {
+                tocBuilder.AppendLine("      <ul>");
+                listsOpen++;
+                currentLevel++;
+            }
+            while (level < currentLevel)
+            {
+                tocBuilder.AppendLine("      </ul>");
+                listsOpen--;
+                currentLevel--;
+            }
+
+            tocBuilder.AppendLine($"      <li><a href=\"#{id}\">{text}</a></li>");
+        }
+
+        while (listsOpen > 0)
+        {
+            tocBuilder.AppendLine("    </ul>");
+            listsOpen--;
+        }
+
+        tocBuilder.AppendLine("  </details>");
+        tocBuilder.AppendLine("</nav>");
+
+        return tocBuilder.ToString();
     }
 
     record TagLink

@@ -28,6 +28,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Atom Feed Discovery -->
   <link rel="alternate" type="application/atom+xml" title="{{ site_title }} Feed" href="/feed.xml">
+  <!-- Table of Contents Styles -->
+  <style>
+    .table-of-contents {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      background: var(--pico-card-background-color);
+    }
+    .table-of-contents summary {
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+    }
+    .table-of-contents ul {
+      list-style: none;
+      padding-left: 1rem;
+      margin: 0;
+    }
+    .table-of-contents > details > ul {
+      padding-left: 0;
+    }
+    .table-of-contents li {
+      margin: 0.25rem 0;
+    }
+    .table-of-contents a {
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .table-of-contents a.active {
+      font-weight: bold;
+    }
+    @media (min-width: 1200px) {
+      .has-toc {
+        display: grid;
+        grid-template-columns: 1fr 250px;
+        gap: 2rem;
+        align-items: start;
+      }
+      .has-toc > .table-of-contents {
+        position: sticky;
+        top: 1rem;
+        order: 2;
+        margin-bottom: 0;
+      }
+      .has-toc > .page-content {
+        order: 1;
+      }
+    }
+  </style>
 </head>
 <body>
   <!-- Header -->
@@ -56,8 +105,13 @@
   </header>
 
   <!-- Main -->
-  <main class="container">
+  <main class="container {{ if toc && toc != '' }}has-toc{{ end }}">
+    <div class="page-content">
     {{ content }}
+    </div>
+    {{ if toc && toc != '' }}
+    {{ toc }}
+    {{ end }}
     {{ if tags && tags.size > 0 }}
     <nav aria-label="Tags">
       <p><strong>Tags:</strong>
@@ -89,6 +143,32 @@
   <!-- Initialize Mermaid -->
   <script>
     mermaid.initialize({ startOnLoad: true });
+  </script>
+
+  <!-- TOC Scroll Spy -->
+  <script>
+    (function() {
+      const toc = document.querySelector('.table-of-contents');
+      if (!toc) return;
+      const links = toc.querySelectorAll('a[href^="#"]');
+      if (!links.length) return;
+      const headings = Array.from(links).map(function(link) {
+        return document.getElementById(link.getAttribute('href').slice(1));
+      }).filter(Boolean);
+      function onScroll() {
+        var current = '';
+        headings.forEach(function(heading) {
+          if (heading.getBoundingClientRect().top <= 100) {
+            current = heading.id;
+          }
+        });
+        links.forEach(function(link) {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+        });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
   </script>
 </body>
 </html>
