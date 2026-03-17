@@ -249,15 +249,32 @@ public interface IGenerateWebsite : IHasWebsitePaths
             // Generate Table of Contents
             var tocHtml = GenerateTableOfContents(htmlContent, metadata);
 
+            // Build hreflang links for translations
+            var hreflangLinks = BuildHreflangLinks(file, metadata);
+
             // Prepare data for the template
-            var templateData = PrepareTemplateData(file, metadata, htmlContent, tocHtml, menu);
+            var templateData = PrepareTemplateData(file, metadata, htmlContent, tocHtml, menu, hreflangLinks);
 
             // Replace placeholders in the template
             var finalHtml = Template
                 .Parse(templateContent)
                 .Render(templateData);
 
-            var outputFile = OutputDirectory / $"{file.NameWithoutExtension}.html";
+            // Determine output path based on language
+            var lang = metadata.TryGetValue("lang", out var l) ? l : "";
+            AbsolutePath outputFile;
+            if (!string.IsNullOrEmpty(lang))
+            {
+                var langDir = OutputDirectory / lang;
+                langDir.CreateDirectory();
+                // Use translationOf as filename if available, else original name
+                var baseName = metadata.TryGetValue("translationOf", out var tOf) ? tOf : file.NameWithoutExtension;
+                outputFile = langDir / $"{baseName}.html";
+            }
+            else
+            {
+                outputFile = OutputDirectory / $"{file.NameWithoutExtension}.html";
+            }
             outputFile.WriteAllText(finalHtml);
 
             Information($"Generated HTML: {outputFile}");
@@ -269,9 +286,12 @@ public interface IGenerateWebsite : IHasWebsitePaths
         }
     }
 
-    private object PrepareTemplateData(AbsolutePath file, Dictionary<string, string> metadata, string htmlContent, string tocHtml, List<MenuItem> menu)
+    private object PrepareTemplateData(AbsolutePath file, Dictionary<string, string> metadata, string htmlContent, string tocHtml, List<MenuItem> menu, List<HreflangLink> hreflangLinks)
     {
-        var pageUrl = new Uri(new Uri(SiteBaseUrl.TrimEnd('/') + "/"), $"{file.NameWithoutExtension}.html").AbsoluteUri;
+        var lang = metadata.TryGetValue("lang", out var l) ? l : "en";
+        var baseName = metadata.TryGetValue("translationOf", out var tOf) ? tOf : file.NameWithoutExtension;
+        var pagePath = !string.IsNullOrEmpty(l) ? $"{l}/{baseName}.html" : $"{file.NameWithoutExtension}.html";
+        var pageUrl = new Uri(new Uri(SiteBaseUrl.TrimEnd('/') + "/"), pagePath).AbsoluteUri;
 
         var tags = new List<TagLink>();
         if (metadata.TryGetValue("keywords", out var keywordsStr) && !string.IsNullOrWhiteSpace(keywordsStr))
@@ -320,11 +340,51 @@ public interface IGenerateWebsite : IHasWebsitePaths
             canonical_url = pageUrl,
             image_url = pageImage,
             analytics_snippet = IncludeDrafts ? "" : GenerateAnalyticsSnippet(),
+            lang,
+            hreflang_links = hreflangLinks,
             menu,
             tags
         };
 
         return templateData;
+    }
+
+    private List<HreflangLink> BuildHreflangLinks(AbsolutePath file, Dictionary<string, string> metadata)
+    {
+        var links = new List<HreflangLink>();
+        var translationOf = metadata.TryGetValue("translationOf", out var tOf) ? tOf : "";
+        if (string.IsNullOrEmpty(translationOf))
+            return links;
+
+        var baseUrl = SiteBaseUrl.TrimEnd('/');
+        var allFiles = InputDirectory.GlobFiles("**/*.md");
+
+        foreach (var f in allFiles)
+        {
+            var (m, _) = MarkdownHelper.ParseMarkdownFile(f);
+            var fTranslation = m.TryGetValue("translationOf", out var ft) ? ft : "";
+            if (fTranslation != translationOf)
+                continue;
+
+            var fLang = m.TryGetValue("lang", out var fl) ? fl : "en";
+            var href = $"{baseUrl}/{fLang}/{translationOf}.html";
+            links.Add(new HreflangLink { Lang = fLang, Href = href });
+        }
+
+        // Add x-default pointing to default language
+        if (links.Count > 0)
+        {
+            var defaultLink = links.FirstOrDefault(l => l.Lang == "en") ?? links.First();
+            links.Add(new HreflangLink { Lang = "x-default", Href = defaultLink.Href });
+        }
+
+        return links;
+    }
+
+    record HreflangLink
+    {
+        public required string Lang { get; init; }
+        public required string Href { get; init; }
     }
 
     private string GenerateAnalyticsSnippet()
