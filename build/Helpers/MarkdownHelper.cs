@@ -142,4 +142,43 @@ public static class MarkdownHelper
         var markdownContent = RemoveFrontMatter(document, content);
         return (metadata, markdownContent);
     }
+
+    /// <summary>
+    /// Determines the publication status of a page based on its metadata.
+    /// </summary>
+    public static ContentStatus GetContentStatus(Dictionary<string, string> metadata, bool includeDrafts = false)
+    {
+        // Check draft flag
+        if (metadata.TryGetValue("draft", out var draft) &&
+            string.Equals(draft, "true", StringComparison.OrdinalIgnoreCase))
+        {
+            return includeDrafts ? ContentStatus.Draft : ContentStatus.Excluded;
+        }
+
+        // Check publishDate for scheduled content
+        if (metadata.TryGetValue("publishDate", out var publishDateStr) &&
+            DateTime.TryParse(publishDateStr, out var publishDate))
+        {
+            if (publishDate.Date > DateTime.Today)
+                return includeDrafts ? ContentStatus.Scheduled : ContentStatus.Excluded;
+        }
+
+        // Check status field for archived content
+        if (metadata.TryGetValue("status", out var status) &&
+            string.Equals(status, "archived", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentStatus.Archived;
+        }
+
+        return ContentStatus.Published;
+    }
+}
+
+public enum ContentStatus
+{
+    Published,
+    Draft,
+    Scheduled,
+    Archived,
+    Excluded
 }
