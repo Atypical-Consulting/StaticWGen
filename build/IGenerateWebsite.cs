@@ -24,6 +24,15 @@ public interface IGenerateWebsite : IHasWebsitePaths
     [Parameter("Default image URL for social sharing")]
     string DefaultImageUrl => TryGetValue(() => DefaultImageUrl) ?? "";
     
+    [Parameter("Analytics provider: plausible, google, custom, or empty to disable")]
+    string AnalyticsProvider => TryGetValue(() => AnalyticsProvider) ?? "";
+
+    [Parameter("Analytics site ID (domain for Plausible, measurement ID for GA4)")]
+    string AnalyticsSiteId => TryGetValue(() => AnalyticsSiteId) ?? "";
+
+    [Parameter("Custom analytics script URL")]
+    string AnalyticsScriptUrl => TryGetValue(() => AnalyticsScriptUrl) ?? "";
+
     [Parameter("Include draft pages in output")]
     bool IncludeDrafts => TryGetValue<bool?>(() => IncludeDrafts) ?? false;
 
@@ -268,11 +277,38 @@ public interface IGenerateWebsite : IHasWebsitePaths
             page_url = pageUrl,
             canonical_url = pageUrl,
             image_url = pageImage,
+            analytics_snippet = IncludeDrafts ? "" : GenerateAnalyticsSnippet(),
             menu,
             tags
         };
 
         return templateData;
+    }
+
+    private string GenerateAnalyticsSnippet()
+    {
+        if (string.IsNullOrEmpty(AnalyticsProvider))
+            return "";
+
+        return AnalyticsProvider.ToLowerInvariant() switch
+        {
+            "plausible" => $"<script defer data-domain=\"{AnalyticsSiteId}\" " +
+                           $"src=\"{(string.IsNullOrEmpty(AnalyticsScriptUrl) ? "https://plausible.io/js/script.js" : AnalyticsScriptUrl)}\"></script>",
+
+            "google" or "ga4" => $"<script async src=\"https://www.googletagmanager.com/gtag/js?id={AnalyticsSiteId}\"></script>\n" +
+                                 "<script>\n" +
+                                 "  window.dataLayer = window.dataLayer || [];\n" +
+                                 "  function gtag(){dataLayer.push(arguments);}\n" +
+                                 "  gtag('js', new Date());\n" +
+                                 $"  gtag('config', '{AnalyticsSiteId}');\n" +
+                                 "</script>",
+
+            "custom" => !string.IsNullOrEmpty(AnalyticsScriptUrl)
+                ? $"<script defer src=\"{AnalyticsScriptUrl}\"></script>"
+                : "",
+
+            _ => ""
+        };
     }
 
     private static string GenerateTableOfContents(string htmlContent, Dictionary<string, string> metadata)

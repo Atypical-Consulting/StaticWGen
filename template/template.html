@@ -171,6 +171,11 @@
     <small>© 2024 {{ site_title }}</small>
   </footer>
 
+  {{ if analytics_snippet && analytics_snippet != '' }}
+  <!-- Analytics -->
+  {{ analytics_snippet }}
+  {{ end }}
+
   <!-- Minimal theme switcher -->
   <script src="js/minimal-theme-switcher.js"></script>
 
