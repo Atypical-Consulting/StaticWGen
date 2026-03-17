@@ -11,7 +11,8 @@
   <link rel="stylesheet" href="css/prism.css">
   <title>{{ page_title }} - {{ site_title }}</title>
   <meta name="description" content="{{ description }}">
-  <!-- Canonical URL -->
+  {{ if noindex }}<meta name="robots" content="noindex, nofollow">
+  {{ end }}<!-- Canonical URL -->
   <link rel="canonical" href="{{ canonical_url }}">
   <!-- Open Graph Meta Tags -->
   <meta property="og:title" content="{{ page_title }} - {{ site_title }}">

@@ -91,8 +91,8 @@ public interface IGenerateWebsite : IHasWebsitePaths
                 Title = file.NameWithoutExtension,
                 Url = $"{file.NameWithoutExtension}.html"
             })
-            // exclude index.html from the menu
-            .Where(item => item.Url != "index.html")
+            // exclude index.html and 404.html from the menu
+            .Where(item => item.Url != "index.html" && item.Url != "404.html")
             .ToList();
         
         return menu;
@@ -185,6 +185,10 @@ public interface IGenerateWebsite : IHasWebsitePaths
         if (hasDate && DateTime.TryParse(pageDate, out var parsedDate))
             isoDate = parsedDate.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
+        // Check for noindex flag
+        var isNoIndex = metadata.TryGetValue("noindex", out var noindex) &&
+                        string.Equals(noindex, "true", StringComparison.OrdinalIgnoreCase);
+
         var templateData = new
         {
             site_title = SiteTitle,
@@ -196,6 +200,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
             iso_date = isoDate,
             og_type = ogType,
             schema_type = schemaType,
+            noindex = isNoIndex,
             content = htmlContent,
             toc = tocHtml,
             page_url = pageUrl,
