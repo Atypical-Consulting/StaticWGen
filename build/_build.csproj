@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\src\StaticWGen.Core\StaticWGen.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="ci\" />
   </ItemGroup>
 
