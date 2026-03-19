@@ -1,6 +1,6 @@
 # StaticWGen
 
-[![CI](https://github.com/phmatray/StaticWGen/actions/workflows/ci.yml/badge.svg)](https://github.com/phmatray/StaticWGen/actions/workflows/ci.yml)
+[![CI](https://github.com/Atypical-Consulting/StaticWGen/actions/workflows/ci.yml/badge.svg)](https://github.com/Atypical-Consulting/StaticWGen/actions/workflows/ci.yml)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -69,7 +69,7 @@ graph LR
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/phmatray/StaticWGen.git
+git clone https://github.com/Atypical-Consulting/StaticWGen.git
 cd StaticWGen
 ```
 
