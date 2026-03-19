@@ -207,6 +207,7 @@ public interface IWatch : IHasWebsitePaths
             canonical_url = $"{SiteBaseUrl.TrimEnd('/')}/{file.NameWithoutExtension}.html",
             image_url = "",
             analytics_snippet = "",
+            base_path = BasePath,
             menu = InputDirectory.GlobFiles("**/*.md")
                 .Select(f => new { title = f.NameWithoutExtension, url = $"{f.NameWithoutExtension}.html" })
                 .Where(i => i.url != "index.html" && i.url != "404.html")
