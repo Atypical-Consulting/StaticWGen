@@ -47,7 +47,7 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
                     contentHtml += "</article>\n";
                 }
 
-                contentHtml += BuildPaginationNav(page, totalPages, "/blog");
+                contentHtml += BuildPaginationNav(page, totalPages, $"{BasePath}/blog");
 
                 var pageUrl = page == 1
                     ? $"{SiteBaseUrl.TrimEnd('/')}/blog.html"
@@ -69,6 +69,7 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
                     page_url = pageUrl,
                     canonical_url = pageUrl,
                     image_url = "",
+                    base_path = BasePath,
                     menu,
                     tags = Array.Empty<object>()
                 };
@@ -122,7 +123,7 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
             posts.Add(new BlogPost
             {
                 Title = metadata.TryGetValue("title", out var title) ? title : file.NameWithoutExtension,
-                Url = $"/{file.NameWithoutExtension}.html",
+                Url = $"{BasePath}/{file.NameWithoutExtension}.html",
                 Date = dateStr,
                 Description = metadata.TryGetValue("description", out var desc) ? desc : ""
             });

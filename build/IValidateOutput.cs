@@ -164,8 +164,19 @@ public interface IValidateOutput : IHasWebsitePaths
             if (string.IsNullOrEmpty(cleanHref) || cleanHref == "/")
                 continue;
 
+            // Skip links that point to the base path root (e.g., "/StaticWGen/")
+            var basePath = BasePath;
+            if (!string.IsNullOrEmpty(basePath) &&
+                (cleanHref == basePath || cleanHref == basePath + "/"))
+                continue;
+
             // Decode URL-encoded characters (e.g., %20 -> space, %23 -> #)
             var decodedHref = Uri.UnescapeDataString(cleanHref).TrimStart('/');
+
+            // Strip BasePath prefix if present (e.g., "StaticWGen/contact.html" -> "contact.html")
+            var basePathTrimmed = BasePath.TrimStart('/');
+            if (!string.IsNullOrEmpty(basePathTrimmed) && decodedHref.StartsWith(basePathTrimmed + "/"))
+                decodedHref = decodedHref.Substring(basePathTrimmed.Length + 1);
 
             // Check if the target file exists on disk
             var fullPath = OutputDirectory / decodedHref;

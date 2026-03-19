@@ -67,7 +67,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
                 tagMap[normalizedTag].Add(new TaggedPage
                 {
                     Title = pageTitle,
-                    Url = $"/{file.NameWithoutExtension}.html",
+                    Url = $"{BasePath}/{file.NameWithoutExtension}.html",
                     Date = pageDate
                 });
             }
@@ -83,7 +83,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
         var tagListHtml = "<h1>Tags</h1>\n<div style=\"display: flex; flex-wrap: wrap; gap: 0.5rem;\">\n";
         foreach (var tag in sortedTags)
         {
-            tagListHtml += $"  <a href=\"/tags/{Uri.EscapeDataString(tag.Key)}.html\" " +
+            tagListHtml += $"  <a href=\"{BasePath}/tags/{Uri.EscapeDataString(tag.Key)}.html\" " +
                            $"style=\"display: inline-block; padding: 0.25rem 0.75rem; " +
                            $"border-radius: 1rem; text-decoration: none;\">" +
                            $"{tag.Key} ({tag.Value.Count})</a>\n";
@@ -101,6 +101,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
             content = tagListHtml,
             page_url = $"{SiteBaseUrl.TrimEnd('/')}/tags.html",
             image_url = "",
+            base_path = BasePath,
             menu,
             tags = Array.Empty<object>()
         };
@@ -139,7 +140,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
                 // Pagination nav
                 if (totalPages > 1)
                 {
-                    var basePath = $"/tags/{Uri.EscapeDataString(tag)}";
+                    var basePath = $"{BasePath}/tags/{Uri.EscapeDataString(tag)}";
                     var prevUrl = page > 1
                         ? (page == 2 ? $"{basePath}.html" : $"{basePath}/page/{page - 1}.html")
                         : "";
@@ -157,7 +158,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
                     contentHtml += "  </ul>\n</nav>\n";
                 }
 
-                contentHtml += "<p><a href=\"/tags.html\">&larr; All tags</a></p>";
+                contentHtml += $"<p><a href=\"{BasePath}/tags.html\">&larr; All tags</a></p>";
 
                 var escapedTag = Uri.EscapeDataString(tag);
                 var pageUrl = page == 1
@@ -180,6 +181,7 @@ public interface IGenerateTagPages : IHasWebsitePaths
                     page_url = pageUrl,
                     canonical_url = pageUrl,
                     image_url = "",
+                    base_path = BasePath,
                     menu,
                     tags = Array.Empty<object>()
                 };

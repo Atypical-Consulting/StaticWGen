@@ -312,7 +312,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
         {
             tags = keywordsStr
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Select(t => new TagLink { Name = t.ToLowerInvariant(), Url = $"/tags/{Uri.EscapeDataString(t.ToLowerInvariant())}.html" })
+                .Select(t => new TagLink { Name = t.ToLowerInvariant(), Url = $"{BasePath}/tags/{Uri.EscapeDataString(t.ToLowerInvariant())}.html" })
                 .ToList();
         }
 
@@ -356,6 +356,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
             analytics_snippet = IncludeDrafts ? "" : GenerateAnalyticsSnippet(),
             lang,
             hreflang_links = hreflangLinks,
+            base_path = BasePath,
             menu,
             tags
         };

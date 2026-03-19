@@ -58,7 +58,7 @@ public interface IGenerateSearchIndex : IHasWebsitePaths
 
                 entries.Add(new SearchEntry
                 {
-                    Url = $"/{file.Name}",
+                    Url = $"{BasePath}/{file.Name}",
                     Title = title,
                     Description = description,
                     Tags = tags,
