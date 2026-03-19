@@ -191,8 +191,14 @@ public interface IValidateOutput : IHasWebsitePaths
             .Select(f => f.Name)
             .ToList();
 
+        // 404 pages are intentionally excluded from sitemaps
+        var excludedFromSitemap = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "404.html" };
+
         foreach (var fileName in rootHtmlFiles)
         {
+            if (excludedFromSitemap.Contains(fileName))
+                continue;
+
             if (!sitemapContent.Contains(fileName))
             {
                 warnings.Add($"[SEO] sitemap.xml does not include: {fileName}");

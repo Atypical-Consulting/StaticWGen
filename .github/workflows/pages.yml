@@ -31,7 +31,7 @@ jobs:
         run: |
           chmod +x build.sh
           ./build.sh BuildWebsite \
-            --site-base-url "https://phmatray.github.io/StaticWGen" \
+            --site-base-url "https://atypical-consulting.github.io/StaticWGen" \
             --site-title "StaticWGen"
 
       - name: Setup Pages

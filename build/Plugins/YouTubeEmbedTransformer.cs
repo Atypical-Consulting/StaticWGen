@@ -12,7 +12,8 @@ public class YouTubeEmbedTransformer : IContentTransformer
 
     public string Transform(string html, Dictionary<string, string> metadata)
     {
-        return Regex.Replace(html, @"\{\{youtube:([a-zA-Z0-9_-]+)\}\}", match =>
+        // Match youtube shortcodes, including any wrapping <p> tags from Markdown rendering
+        return Regex.Replace(html, @"(?:<p>)?\{\{youtube:([a-zA-Z0-9_-]+)\}\}(?:</p>)?", match =>
         {
             var videoId = match.Groups[1].Value;
             return $"""

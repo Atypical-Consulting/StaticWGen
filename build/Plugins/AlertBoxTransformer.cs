@@ -14,7 +14,8 @@ public class AlertBoxTransformer : IContentTransformer
 
     public string Transform(string html, Dictionary<string, string> metadata)
     {
-        return Regex.Replace(html, @"\{\{alert:(\w+)\}\}(.*?)\{\{/alert\}\}", match =>
+        // Match alert shortcodes, including any wrapping <p> tags from Markdown rendering
+        return Regex.Replace(html, @"(?:<p>)?\{\{alert:(\w+)\}\}(.*?)\{\{/alert\}\}(?:</p>)?", match =>
         {
             var type = match.Groups[1].Value.ToLowerInvariant();
             var content = match.Groups[2].Value.Trim();
