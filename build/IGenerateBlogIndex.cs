@@ -8,9 +8,6 @@ using static Serilog.Log;
 
 public interface IGenerateBlogIndex : IHasWebsitePaths
 {
-    [Parameter("Title of the site")][Required]
-    string SiteTitle => TryGetValue(() => SiteTitle);
-
     int PostsPerPage => 10;
 
     Target GenerateBlogIndex => _ => _
@@ -101,10 +98,15 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
     private List<BlogPost> CollectPosts()
     {
         var markdownFiles = InputDirectory.GlobFiles("**/*.md");
+        var datePattern = new System.Text.RegularExpressions.Regex(@"^\d{4}-\d{2}-\d{2}");
         var posts = new List<BlogPost>();
 
         foreach (var file in markdownFiles)
         {
+            // Only include date-prefixed files as blog posts
+            if (!datePattern.IsMatch(file.NameWithoutExtension))
+                continue;
+
             var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
 
             // Skip drafts, scheduled, excluded, and translation files
@@ -163,19 +165,33 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
     private List<IndexMenuItem> BuildIndexMenu()
     {
         var markdownFiles = InputDirectory.GlobFiles("**/*.md");
+        var datePattern = new System.Text.RegularExpressions.Regex(@"^\d{4}-\d{2}-\d{2}");
         return markdownFiles
             .Where(file =>
             {
                 var (m, _) = MarkdownHelper.ParseMarkdownFile(file);
                 return MarkdownHelper.GetContentStatus(m) != ContentStatus.Excluded;
             })
-            .Select(file => new IndexMenuItem
+            .Select(file =>
             {
-                Title = file.NameWithoutExtension,
-                Url = $"{file.NameWithoutExtension}.html"
+                var slug = file.NameWithoutExtension;
+                var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+                var title = metadata.TryGetValue("title", out var t) && !string.IsNullOrWhiteSpace(t)
+                    ? t
+                    : slug;
+                var hidden = metadata.TryGetValue("menu", out var m)
+                             && m.Equals("false", StringComparison.OrdinalIgnoreCase);
+                return new IndexMenuItem
+                {
+                    Title = title,
+                    Url = $"{slug}.html",
+                    Hidden = hidden
+                };
             })
-            .Where(item => item.Url != "index.html" && item.Url != "404.html" &&
-                           !item.Title.Contains('.'))
+            .Where(item => item.Url != "index.html" && item.Url != "404.html")
+            .Where(item => !item.Url.Replace(".html", "").Contains('.'))
+            .Where(item => !datePattern.IsMatch(item.Url))
+            .Where(item => !item.Hidden)
             .ToList();
     }
 
@@ -191,5 +207,6 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
     {
         public required string Title { get; init; }
         public required string Url { get; init; }
+        public bool Hidden { get; init; }
     }
 }

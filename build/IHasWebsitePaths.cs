@@ -4,6 +4,9 @@ using Nuke.Common.IO;
 
 public interface IHasWebsitePaths : INukeBuild
 {
+    [Parameter("Title of the site")][Required]
+    string SiteTitle => TryGetValue(() => SiteTitle);
+
     [Parameter("Base URL of the site")][Required]
     string SiteBaseUrl => TryGetValue(() => SiteBaseUrl);
 

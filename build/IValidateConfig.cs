@@ -8,9 +8,6 @@ using static Serilog.Log;
 
 public interface IValidateConfig : IHasWebsitePaths
 {
-    [Parameter("Title of the site")]
-    string SiteTitle => TryGetValue(() => SiteTitle) ?? "";
-
     Target ValidateConfig => _ => _
         .Executes(() =>
         {

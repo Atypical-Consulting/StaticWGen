@@ -1,39 +1,61 @@
 ---
-title: "Contact Us"
-description: "Get in touch with us! We would love to hear from you."
+title: "Contribute"
+description: "Contribute to StaticWGen, report issues, or get help from the community."
 author: "Philippe Matray"
 date: "2024-09-13"
-keywords: "contact, get in touch, email, social media, office location"
+keywords: "contact, contribute, open source, github, community"
 image: "./assets/logo-wgen.webp"
 ---
-# Contact Us
+# Get Involved
 
-We would love to hear from you! Whether you have questions, feedback, or just want to say hello, feel free to reach out.
+StaticWGen is open source and community-driven. Whether you want to report a bug, suggest a feature, or contribute code, there's a place for you.
 
-## Ways to Get in Touch
+## Links
 
-- **Email**: [contact@website.com](mailto:contact@website.com)
-- **Twitter**: [@website](https://twitter.com/website)
-- **GitHub**: [github.com/website](https://github.com/website)
+- **GitHub**: [github.com/phmatray/StaticWGen](https://github.com/phmatray/StaticWGen)
+- **Issues**: [Report a bug or request a feature](https://github.com/phmatray/StaticWGen/issues)
+- **Discussions**: [Ask questions and share ideas](https://github.com/phmatray/StaticWGen/discussions)
 
-### Office Location
+## Contributing
 
-Our main office is located at:
+We welcome contributions of all kinds:
 
-<address>
-    123 Demo Street<br/>
-    Demo City, DEMO 12345<br/>
-    Country
-</address>
+1. **Bug reports** --- found something broken? Open an issue with steps to reproduce
+2. **Feature requests** --- have an idea? Start a discussion first
+3. **Pull requests** --- fork, branch, code, test, PR
+4. **Documentation** --- typo fixes, better explanations, new guides
+5. **Content examples** --- share your Markdown templates and themes
 
-## Business Hours
+### Development Setup
 
-* Monday - Friday: 9 AM - 5 PM
-* Saturday: Closed
-* Sunday: Closed
+```bash
+# Clone the repo
+git clone https://github.com/phmatray/StaticWGen.git
+cd StaticWGen
+
+# Build and generate the site
+nuke
+
+# The generated site is in /output
+```
+
+### Project Structure
+
+```
+StaticWGen/
+  build/          # NUKE build interfaces (C#)
+  src/            # Core library (Markdown processing)
+  input/          # Content files (Markdown + assets)
+  template/       # Scriban HTML template
+  output/         # Generated static site
+```
+
+## License
+
+StaticWGen is released under the MIT License. Use it for personal projects, commercial sites, or anything in between.
 
 ---
 
-### Looking Forward to Connecting!
+### Built by Philippe Matray
 
-Feel free to reach out via email, social media, or drop by our office. We are always happy to assist with any inquiries.
+A .NET developer passionate about build automation, clean architecture, and developer experience.

@@ -8,9 +8,6 @@ using static Serilog.Log;
 
 public interface IGenerateFeed : IHasWebsitePaths
 {
-    [Parameter("Title of the site")][Required]
-    string SiteTitle => TryGetValue(() => SiteTitle);
-
     [Parameter("Title for the Atom feed (defaults to SiteTitle)")]
     string FeedTitle => TryGetValue(() => FeedTitle) ?? SiteTitle;
 

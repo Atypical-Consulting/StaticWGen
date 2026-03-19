@@ -16,9 +16,6 @@ using static Serilog.Log;
 
 public interface IWatch : IHasWebsitePaths
 {
-    [Parameter("Title of the site")][Required]
-    string SiteTitle => TryGetValue(() => SiteTitle);
-
     [Parameter("Port for the development server")]
     int Port => TryGetValue<int?>(() => Port) ?? 3000;
 
@@ -111,6 +108,10 @@ public interface IWatch : IHasWebsitePaths
         try
         {
             var sw = Stopwatch.StartNew();
+
+            // Re-copy static assets (JS/CSS) from template to output
+            CopyTemplateAssets();
+
             var templateContent = (TemplateDirectory / "template.html").ReadAllText();
             var markdownFiles = InputDirectory.GlobFiles("**/*.md");
             var menu = markdownFiles
@@ -310,6 +311,28 @@ public interface IWatch : IHasWebsitePaths
         catch (Exception ex)
         {
             Error("HTTP server error: {Message}", ex.Message);
+        }
+    }
+
+    private void CopyTemplateAssets()
+    {
+        var sourceJs = TemplateDirectory / "js";
+        var sourceCss = TemplateDirectory / "css";
+        var outputJs = OutputDirectory / "js";
+        var outputCss = OutputDirectory / "css";
+
+        if (sourceJs.DirectoryExists())
+        {
+            if (outputJs.DirectoryExists())
+                outputJs.DeleteDirectory();
+            sourceJs.Copy(outputJs);
+        }
+
+        if (sourceCss.DirectoryExists())
+        {
+            if (outputCss.DirectoryExists())
+                outputCss.DeleteDirectory();
+            sourceCss.Copy(outputCss);
         }
     }
 

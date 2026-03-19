@@ -80,7 +80,7 @@ public interface IOptimizeOutput : IHasWebsitePaths
         {
             RemoveHtmlComments = true,
             RemoveOptionalEndTags = false,
-            WhitespaceMinificationMode = WhitespaceMinificationMode.Medium,
+            WhitespaceMinificationMode = WhitespaceMinificationMode.Safe,
             RemoveRedundantAttributes = true,
             MinifyEmbeddedCssCode = true,
             MinifyEmbeddedJsCode = true,

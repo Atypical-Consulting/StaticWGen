@@ -8,9 +8,6 @@ using static Serilog.Log;
 
 public interface IGenerateTagPages : IHasWebsitePaths
 {
-    [Parameter("Title of the site")][Required]
-    string SiteTitle => TryGetValue(() => SiteTitle);
-
     Target GenerateTagPages => _ => _
         .DependsOn<IGenerateWebsite>(x => x.GenerateHtml)
         .TriggeredBy<IGenerateWebsite>(x => x.GenerateHtml)
@@ -210,19 +207,33 @@ public interface IGenerateTagPages : IHasWebsitePaths
     private List<TagMenuItem> BuildMenu()
     {
         var markdownFiles = InputDirectory.GlobFiles("**/*.md");
+        var datePattern = new System.Text.RegularExpressions.Regex(@"^\d{4}-\d{2}-\d{2}");
         var menu = markdownFiles
             .Where(file =>
             {
                 var (m, _) = MarkdownHelper.ParseMarkdownFile(file);
                 return MarkdownHelper.GetContentStatus(m) != ContentStatus.Excluded;
             })
-            .Select(file => new TagMenuItem
+            .Select(file =>
             {
-                Title = file.NameWithoutExtension,
-                Url = $"{file.NameWithoutExtension}.html"
+                var slug = file.NameWithoutExtension;
+                var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+                var title = metadata.TryGetValue("title", out var t) && !string.IsNullOrWhiteSpace(t)
+                    ? t
+                    : slug;
+                var hidden = metadata.TryGetValue("menu", out var m)
+                             && m.Equals("false", StringComparison.OrdinalIgnoreCase);
+                return new TagMenuItem
+                {
+                    Title = title,
+                    Url = $"{slug}.html",
+                    Hidden = hidden
+                };
             })
-            .Where(item => item.Url != "index.html" && item.Url != "404.html" &&
-                           !item.Title.Contains('.'))
+            .Where(item => item.Url != "index.html" && item.Url != "404.html")
+            .Where(item => !item.Url.Replace(".html", "").Contains('.'))
+            .Where(item => !datePattern.IsMatch(item.Url))
+            .Where(item => !item.Hidden)
             .ToList();
 
         return menu;
@@ -239,5 +250,6 @@ public interface IGenerateTagPages : IHasWebsitePaths
     {
         public required string Title { get; init; }
         public required string Url { get; init; }
+        public bool Hidden { get; init; }
     }
 }

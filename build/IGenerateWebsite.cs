@@ -18,9 +18,6 @@ using static Serilog.Log;
 
 public interface IGenerateWebsite : IHasWebsitePaths
 {
-    [Parameter("Title of the site")][Required]
-    string SiteTitle => TryGetValue(() => SiteTitle);
-    
     [Parameter("Default image URL for social sharing")]
     string DefaultImageUrl => TryGetValue(() => DefaultImageUrl) ?? "";
     
@@ -196,16 +193,29 @@ public interface IGenerateWebsite : IHasWebsitePaths
     private static List<MenuItem> GenerateMenu(IReadOnlyCollection<AbsolutePath> markdownFiles)
     {
         var menu = markdownFiles
-            .Select(file => new MenuItem
+            .Select(file =>
             {
-                Title = file.NameWithoutExtension,
-                Url = $"{file.NameWithoutExtension}.html"
+                var slug = file.NameWithoutExtension;
+                var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+                var title = metadata.TryGetValue("title", out var t) && !string.IsNullOrWhiteSpace(t)
+                    ? t
+                    : slug;
+                var hidden = metadata.TryGetValue("menu", out var m)
+                             && m.Equals("false", StringComparison.OrdinalIgnoreCase);
+                return new MenuItem
+                {
+                    Title = title,
+                    Url = $"{slug}.html",
+                    Hidden = hidden
+                };
             })
-            // exclude index.html, 404.html, and translation files from the menu
-            .Where(item => item.Url != "index.html" && item.Url != "404.html" &&
-                           !item.Title.Contains('.'))
+            // exclude index.html, 404.html, translation files, date-prefixed posts, and pages with menu: false
+            .Where(item => item.Url != "index.html" && item.Url != "404.html")
+            .Where(item => !item.Url.Replace(".html", "").Contains('.'))
+            .Where(item => !System.Text.RegularExpressions.Regex.IsMatch(item.Url, @"^\d{4}-\d{2}-\d{2}"))
+            .Where(item => !item.Hidden)
             .ToList();
-        
+
         return menu;
     }
 
@@ -515,6 +525,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
     {
         public required string Title { get; init; }
         public required string Url { get; init; }
+        public bool Hidden { get; init; }
     }
 }
 
