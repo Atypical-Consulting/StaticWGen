@@ -33,12 +33,21 @@
         "CopyJsScripts",
         "DeployDockerImage",
         "GenerateBlogIndex",
+        "GenerateBuildReport",
         "GenerateFeed",
         "GenerateHtml",
         "GenerateRobotsTxt",
+        "GenerateSearchIndex",
         "GenerateSitemap",
         "GenerateTagPages",
-        "Validate"
+        "Init",
+        "NewPage",
+        "NewPost",
+        "OptimizeImages",
+        "OptimizeOutput",
+        "Validate",
+        "ValidateConfig",
+        "Watch"
       ]
     },
     "Verbosity": {
@@ -112,6 +121,22 @@
   "allOf": [
     {
       "properties": {
+        "AnalyticsProvider": {
+          "type": "string",
+          "description": "Analytics provider: plausible, google, custom, or empty to disable"
+        },
+        "AnalyticsScriptUrl": {
+          "type": "string",
+          "description": "Custom analytics script URL"
+        },
+        "AnalyticsSiteId": {
+          "type": "string",
+          "description": "Analytics site ID (domain for Plausible, measurement ID for GA4)"
+        },
+        "Author": {
+          "type": "string",
+          "description": "Author name"
+        },
         "Configuration": {
           "type": "string",
           "description": "Configuration to build - Default is 'Debug' (local) or 'Release' (server)",
@@ -129,6 +154,10 @@
           "description": "Container port to expose the application",
           "format": "int32"
         },
+        "ContinueOnError": {
+          "type": "boolean",
+          "description": "Continue processing remaining files when one fails"
+        },
         "DefaultImageUrl": {
           "type": "string",
           "description": "Default image URL for social sharing"
@@ -145,14 +174,45 @@
           "type": "string",
           "description": "Title for the Atom feed (defaults to SiteTitle)"
         },
+        "FingerprintAssets": {
+          "type": "boolean",
+          "description": "Enable asset fingerprinting with content hash"
+        },
+        "GenerateWebP": {
+          "type": "boolean",
+          "description": "Generate WebP variants of images"
+        },
         "HostPort": {
           "type": "integer",
           "description": "Host port to publish the container",
           "format": "int32"
         },
+        "ImageMaxWidth": {
+          "type": "integer",
+          "description": "Maximum image width in pixels",
+          "format": "int32"
+        },
         "ImageName": {
           "type": "string",
           "description": "Docker image name to build"
+        },
+        "ImageQuality": {
+          "type": "integer",
+          "description": "Image compression quality (1-100)",
+          "format": "int32"
+        },
+        "IncludeDrafts": {
+          "type": "boolean",
+          "description": "Include draft pages in output"
+        },
+        "MinifyHtml": {
+          "type": "boolean",
+          "description": "Enable HTML minification"
+        },
+        "Port": {
+          "type": "integer",
+          "description": "Port for the development server",
+          "format": "int32"
         },
         "SiteBaseUrl": {
           "type": "string",
@@ -161,6 +221,18 @@
         "SiteTitle": {
           "type": "string",
           "description": "Title of the site"
+        },
+        "Tags": {
+          "type": "string",
+          "description": "Tags for the new post (comma-separated)"
+        },
+        "Theme": {
+          "type": "string",
+          "description": "Theme name (directory under themes/ or template/ for legacy)"
+        },
+        "Title": {
+          "type": "string",
+          "description": "Title for the new content"
         },
         "VersionTag": {
           "type": "string",
