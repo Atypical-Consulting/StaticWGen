@@ -25,7 +25,7 @@ Static sites are fast, secure, and easy to deploy. But most generators force you
 
 ```bash
 # Clone the repository
-git clone https://github.com/phmatray/StaticWGen.git
+git clone https://github.com/Atypical-Consulting/StaticWGen.git
 
 # Generate the site
 nuke

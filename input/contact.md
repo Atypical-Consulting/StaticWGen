@@ -12,9 +12,9 @@ StaticWGen is open source and community-driven. Whether you want to report a bug
 
 ## Links
 
-- **GitHub**: [github.com/phmatray/StaticWGen](https://github.com/phmatray/StaticWGen)
-- **Issues**: [Report a bug or request a feature](https://github.com/phmatray/StaticWGen/issues)
-- **Discussions**: [Ask questions and share ideas](https://github.com/phmatray/StaticWGen/discussions)
+- **GitHub**: [github.com/Atypical-Consulting/StaticWGen](https://github.com/Atypical-Consulting/StaticWGen)
+- **Issues**: [Report a bug or request a feature](https://github.com/Atypical-Consulting/StaticWGen/issues)
+- **Discussions**: [Ask questions and share ideas](https://github.com/Atypical-Consulting/StaticWGen/issues)
 
 ## Contributing
 
@@ -30,7 +30,7 @@ We welcome contributions of all kinds:
 
 ```bash
 # Clone the repo
-git clone https://github.com/phmatray/StaticWGen.git
+git clone https://github.com/Atypical-Consulting/StaticWGen.git
 cd StaticWGen
 
 # Build and generate the site
