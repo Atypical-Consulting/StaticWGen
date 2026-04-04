@@ -12,8 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Markdig" Version="1.1.1" />
-    <PackageReference Include="Scriban" Version="6.5.8" />
+    <PackageReference Include="Markdig" Version="1.1.2" />
+    <PackageReference Include="Scriban" Version="6.6.0" />
     <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
