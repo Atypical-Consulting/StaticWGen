@@ -1,3 +1,5 @@
+![StaticWGen banner](.github/banner.png)
+
 # StaticWGen
 
 [![CI](https://github.com/Atypical-Consulting/StaticWGen/actions/workflows/ci.yml/badge.svg)](https://github.com/Atypical-Consulting/StaticWGen/actions/workflows/ci.yml)
