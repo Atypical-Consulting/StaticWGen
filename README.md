@@ -2,6 +2,26 @@
 
 # StaticWGen
 
+<!-- portfolio-toc:start -->
+
+## Table of Contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [Configuration Reference](#configuration-reference)
+- [Content Authoring Guide](#content-authoring-guide)
+- [Build Targets Reference](#build-targets-reference)
+- [Template Customization](#template-customization)
+- [Docker Deployment](#docker-deployment)
+- [Tech Stack](#tech-stack)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+<!-- portfolio-toc:end -->
+
+
 [![CI](https://github.com/Atypical-Consulting/StaticWGen/actions/workflows/ci.yml/badge.svg)](https://github.com/Atypical-Consulting/StaticWGen/actions/workflows/ci.yml)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
