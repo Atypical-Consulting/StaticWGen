@@ -420,6 +420,22 @@ docker build -t my-site .
 docker run -d -p 8080:80 --name my-site my-site
 ```
 
+<!-- portfolio-techstack:start -->
+
+## Tech Stack
+
+- **.NET 10**
+- HtmlAgilityPack
+- SixLabors.ImageSharp
+- WebMarkupMin.Core
+- Markdig
+- Nuke.Common
+- Scriban
+- WebStoating.Markdig.Prism
+- YamlDotNet
+
+<!-- portfolio-techstack:end -->
+
 ## Contributing
 
 1. Fork the repository
