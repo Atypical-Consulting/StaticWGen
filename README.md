@@ -436,6 +436,16 @@ docker run -d -p 8080:80 --name my-site my-site
 
 <!-- portfolio-techstack:end -->
 
+## Roadmap
+
+- [ ] Implement the `IPublish` build target for automated release-note generation (tracked as a `TODO` in `build/IClean.cs`)
+- [ ] Ship a working client-side search UI that consumes the generated `search-index.json` — themes already declare `search` support in `theme.yaml`, but no template renders a search box yet
+- [ ] Flesh out the `docs` and `minimal` themes with their own `css/`/`js/` assets instead of only `themes/default` shipping dedicated styles and scripts
+- [ ] Expand the `ContentTransformerPipeline` plugin system beyond the built-in `AlertBoxTransformer` and `YouTubeEmbedTransformer`, and document how to author custom transformers
+- [ ] Package the NUKE build automation as a reusable component so other projects can adopt the generator without cloning the whole repo
+
+See the [open issues](https://github.com/Atypical-Consulting/StaticWGen/issues) for more.
+
 ## Contributing
 
 1. Fork the repository
