@@ -7,7 +7,7 @@ Thank you for your interest in contributing to StaticWGen! This guide will help 
 1. Fork the repository
 2. Clone your fork: `git clone https://github.com/your-username/StaticWGen.git`
 3. Create a feature branch from `dev`: `git checkout -b feature/my-feature dev`
-4. Install prerequisites: [.NET 10 SDK](https://dotnet.microsoft.com/download)
+4. Install prerequisites: [.NET 11 SDK](https://dotnet.microsoft.com/download)
 
 ## Development Workflow
 
