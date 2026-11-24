@@ -61,8 +61,8 @@ jobs:
         run: |
           chmod +x build.sh
           ./build.sh BuildWebsite \
-            --site-base-url "https://atypical-consulting.github.io/StaticWGen" \
-            --site-title "StaticWGen"
+            --site-base-url "https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}" \
+            --site-title "${GITHUB_REPOSITORY#*/}"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4

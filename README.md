@@ -89,12 +89,21 @@ graph LR
 
 - [.NET 11 SDK](https://dotnet.microsoft.com/download) (or later)
 
-### 1. Clone and configure
+### 1. Create your site from the template
+
+StaticWGen is a GitHub template repository: click **Use this template → Create a new repository** (or run `gh repo create my-site --template Atypical-Consulting/StaticWGen --public --clone`). Your repository starts with a single commit and everything below works in it unchanged: CI derives the site URL and title from the repository name, and GitHub Pages deploys on every push to `dev` once you set **Settings → Pages → Source** to *GitHub Actions*.
+
+Then make it yours:
 
 ```bash
-git clone https://github.com/Atypical-Consulting/StaticWGen.git
-cd StaticWGen
+rm -rf input CHANGELOG.md                                  # sample content and StaticWGen's own changelog
+echo '{ ".": "0.0.0" }' > .release-please-manifest.json    # your first release will be v0.1.0
+./build.sh Init --title "My Site" --author "Me"             # fresh input/index.md, about.md, assets/
 ```
+
+Set your default branch to `dev` (the workflows run on it), or rename `dev` in `.github/workflows/*.yml`. To pick up generator updates later: `git remote add upstream https://github.com/Atypical-Consulting/StaticWGen && git pull upstream dev --allow-unrelated-histories`.
+
+Prefer a plain clone? `git clone https://github.com/Atypical-Consulting/StaticWGen.git` works the same way.
 
 ### 2. Build the website
 
@@ -504,9 +513,7 @@ docker run -d -p 8080:80 --name my-site my-site
 
 ## Roadmap
 
-- [ ] Package the NUKE build automation as a reusable component so other projects can adopt the generator without cloning the whole repo
-
-See the [open issues](https://github.com/Atypical-Consulting/StaticWGen/issues) for more.
+Planned work is tracked in the [open issues](https://github.com/Atypical-Consulting/StaticWGen/issues).
 
 ## Contributing
 

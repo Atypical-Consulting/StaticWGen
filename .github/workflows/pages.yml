@@ -27,15 +27,17 @@ jobs:
         with:
           dotnet-version: '11.0.x'
 
+      # Before the build: its base_url is the site's real address (custom domain included).
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
       - name: Build website
         run: |
           chmod +x build.sh
           ./build.sh BuildWebsite \
-            --site-base-url "https://atypical-consulting.github.io/StaticWGen" \
-            --site-title "StaticWGen"
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
+            --site-base-url "${{ steps.pages.outputs.base_url }}" \
+            --site-title "${GITHUB_REPOSITORY#*/}"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

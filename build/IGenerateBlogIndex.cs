@@ -18,15 +18,11 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
             Information("Generating paginated blog index...");
 
             var posts = CollectPosts();
-            if (posts.Count == 0)
-            {
-                Warning("No dated posts found. Skipping blog index generation.");
-                return;
-            }
 
             var templateContent = (TemplateDirectory / "template.html").ReadAllText();
             var menu = BuildIndexMenu();
-            var totalPages = (int)Math.Ceiling((double)posts.Count / PostsPerPage);
+            // At least one page: every theme links blog.html, even before the first post.
+            var totalPages = Math.Max(1, (int)Math.Ceiling((double)posts.Count / PostsPerPage));
 
             for (var page = 1; page <= totalPages; page++)
             {
@@ -36,6 +32,8 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
                     .ToList();
 
                 var contentHtml = $"<h1>Blog{(page > 1 ? $" — Page {page}" : "")}</h1>\n";
+                if (pagePosts.Count == 0)
+                    contentHtml += "<p>No posts yet.</p>\n";
                 foreach (var post in pagePosts)
                 {
                     contentHtml += "<article style=\"margin-bottom: 1.5rem;\">\n";
