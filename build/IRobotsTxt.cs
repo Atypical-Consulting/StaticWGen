@@ -12,7 +12,7 @@ public interface IRobotsTxt : IHasWebsitePaths
         {
             Information("Generating robots.txt...");
 
-            var robotsTemplate = TemplateDirectory / "robots.txt";
+            var robotsTemplate = ThemePath("robots.txt");
             if (robotsTemplate.FileExists())
             {
                 var content = robotsTemplate.ReadAllText();

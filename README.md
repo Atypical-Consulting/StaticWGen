@@ -407,6 +407,14 @@ themes/
 
 Select a theme with `--theme <name>`. The build fails if `themes/<name>/` doesn't exist.
 
+A theme only has to ship `template.html`: any `js/`, `css/` or `robots.txt` it doesn't provide is taken from `themes/default/`. Every theme is built and validated in CI.
+
+| Theme | Layout | Search | Syntax highlighting | Dark mode |
+|---|---|---|---|---|
+| `default` | Editorial, top navigation | ✓ | Prism | Toggle (auto / light / dark) |
+| `docs` | Sidebar navigation + table of contents | ✓ | Prism | Follows the OS |
+| `minimal` | Single column, no CSS framework | — | Prism | Follows the OS |
+
 ### Default theme files
 
 - `themes/default/template.html` — Main HTML template
@@ -458,8 +466,6 @@ docker run -d -p 8080:80 --name my-site my-site
 
 ## Roadmap
 
-- [ ] Add a search box to the `docs` theme (the `default` theme already renders one from `search-index.json`)
-- [ ] Flesh out the `docs` and `minimal` themes with their own `css/`/`js/` assets instead of only `themes/default` shipping dedicated styles and scripts
 - [ ] Expand the `ContentTransformerPipeline` plugin system beyond the built-in `AlertBoxTransformer` and `YouTubeEmbedTransformer`, and document how to author custom transformers
 - [ ] Package the NUKE build automation as a reusable component so other projects can adopt the generator without cloning the whole repo
 
