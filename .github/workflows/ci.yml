@@ -44,6 +44,9 @@ jobs:
           echo "Generated files:"
           find output -type f | sort
 
+      - name: Smoke-test the Docker image
+        run: bash scripts/smoke-test-image.sh
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
