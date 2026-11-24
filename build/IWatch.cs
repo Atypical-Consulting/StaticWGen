@@ -34,7 +34,7 @@ public interface IWatch : IHasWebsitePaths
             httpThread.Start();
 
             Information("Serving at http://localhost:{Port}", Port);
-            Information("Watching input/ and template/ for changes...");
+            Information("Watching input/ and {Theme} for changes...", TemplateDirectory);
             Information("Press Ctrl+C to stop.");
 
             // Track last rebuild to debounce
