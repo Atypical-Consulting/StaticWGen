@@ -41,7 +41,7 @@ public partial class Site
             var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
 
             // Skip drafts, scheduled, excluded, and archived content from feed
-            var status = MarkdownService.GetContentStatus(metadata);
+            var status = StatusOf(metadata);
             if (status != ContentStatus.Published)
                 continue;
 

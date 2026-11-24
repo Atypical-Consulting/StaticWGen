@@ -135,6 +135,13 @@ public partial class Site(AbsolutePath rootDirectory)
         Information("Output directory cleaned successfully!");
     }
 
+    /// <summary>
+    /// The one place that decides whether a page is published: every step asks this, so with
+    /// IncludeDrafts a draft is listed (blog, tags, feed) wherever its own page links to.
+    /// </summary>
+    ContentStatus StatusOf(Dictionary<string, string> metadata) =>
+        MarkdownService.GetContentStatus(metadata, IncludeDrafts);
+
     static string FormatBytes(long bytes)
     {
         if (bytes < 1024) return $"{bytes} B";

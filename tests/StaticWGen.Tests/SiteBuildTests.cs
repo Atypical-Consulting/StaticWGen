@@ -5,8 +5,10 @@ namespace StaticWGen.Tests;
 
 public class SiteBuildTests
 {
-    [Fact]
-    public void Build_GeneratesTheSampleSite_OutsideTheRepository()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)] // drafts must be listed (blog, tags) wherever their own page links to
+    public void Build_GeneratesTheSampleSite_OutsideTheRepository(bool includeDrafts)
     {
         var repo = (AbsolutePath)AppContext.BaseDirectory;
         while (!(repo / "StaticWGen.sln").FileExists())
@@ -18,7 +20,7 @@ public class SiteBuildTests
             (repo / "input").Copy(root / "input");
             (repo / "themes").Copy(root / "themes");
 
-            new Site(root) { SiteTitle = "Test", SiteBaseUrl = "https://example.org/sub" }.Build();
+            new Site(root) { SiteTitle = "Test", SiteBaseUrl = "https://example.org/sub", IncludeDrafts = includeDrafts }.Build();
 
             foreach (var file in new[] { "index.html", "blog.html", "tags.html", "feed.xml", "sitemap.xml", "robots.txt", "search-index.json" })
                 Assert.True((root / "output" / file).FileExists(), $"missing output/{file}");
