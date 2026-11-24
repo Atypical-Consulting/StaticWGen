@@ -45,7 +45,7 @@ This starts a live-reload server on http://localhost:3000.
 ## Code Style
 
 - Follow existing C# conventions in the codebase
-- Keep build targets as focused interfaces (one concern per file)
+- Keep each pipeline step in its own `src/StaticWGen.Core/Site/Site.<Step>.cs` partial file; `build/Build.cs` only maps parameters and calls `Site`
 - Use Serilog structured logging (`Information`, `Warning`, `Error`)
 
 ## Reporting Issues

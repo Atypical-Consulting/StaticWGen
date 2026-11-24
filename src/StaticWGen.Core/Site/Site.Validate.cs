@@ -8,48 +8,47 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using static Serilog.Log;
 
-public interface IValidateOutput : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
-    Target Validate => _ => _
-        .DependsOn<IGenerateWebsite>(x => x.BuildWebsite)
-        .TriggeredBy<IGenerateWebsite>(x => x.BuildWebsite)
-        .Executes(() =>
+    public void Validate()
+    {
+        Information("Validating generated output...");
+
+        var htmlFiles = OutputDirectory.GlobFiles("**/*.html");
+        var errors = new List<string>();
+        var warnings = new List<string>();
+
+        foreach (var file in htmlFiles)
         {
-            Information("Validating generated output...");
+            var relativePath = OutputDirectory.GetRelativePathTo(file);
+            var content = file.ReadAllText();
+            var doc = new HtmlDocument();
+            doc.LoadHtml(content);
 
-            var htmlFiles = OutputDirectory.GlobFiles("**/*.html");
-            var errors = new List<string>();
-            var warnings = new List<string>();
+            ValidateHtmlStructure(doc, relativePath.ToString(), errors, warnings);
+            ValidateAccessibility(doc, relativePath.ToString(), errors, warnings);
+            ValidateSeoMeta(doc, relativePath.ToString(), errors, warnings);
+            ValidateInternalLinks(doc, relativePath.ToString(), htmlFiles, errors, warnings);
+        }
 
-            foreach (var file in htmlFiles)
-            {
-                var relativePath = OutputDirectory.GetRelativePathTo(file);
-                var content = file.ReadAllText();
-                var doc = new HtmlDocument();
-                doc.LoadHtml(content);
+        ValidateSitemapCoverage(htmlFiles, warnings);
+        ValidateRobotsTxt(warnings);
 
-                ValidateHtmlStructure(doc, relativePath.ToString(), errors, warnings);
-                ValidateAccessibility(doc, relativePath.ToString(), errors, warnings);
-                ValidateSeoMeta(doc, relativePath.ToString(), errors, warnings);
-                ValidateInternalLinks(doc, relativePath.ToString(), htmlFiles, errors, warnings);
-            }
+        // Report results
+        foreach (var warning in warnings)
+            Warning(warning);
 
-            ValidateSitemapCoverage(htmlFiles, warnings);
-            ValidateRobotsTxt(warnings);
+        foreach (var error in errors)
+            Error(error);
 
-            // Report results
-            foreach (var warning in warnings)
-                Warning(warning);
+        Information("Validation complete: {ErrorCount} error(s), {WarningCount} warning(s)",
+            errors.Count, warnings.Count);
 
-            foreach (var error in errors)
-                Error(error);
-
-            Information("Validation complete: {ErrorCount} error(s), {WarningCount} warning(s)",
-                errors.Count, warnings.Count);
-
-            if (errors.Count > 0)
-                Assert.Fail($"Validation failed with {errors.Count} error(s). See output above.");
-        });
+        if (errors.Count > 0)
+            Assert.Fail($"Validation failed with {errors.Count} error(s). See output above.");
+    }
 
     private static void ValidateHtmlStructure(HtmlDocument doc, string file, List<string> errors, List<string> warnings)
     {

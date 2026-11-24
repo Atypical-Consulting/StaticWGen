@@ -6,93 +6,92 @@ using Nuke.Common.IO;
 using Scriban;
 using static Serilog.Log;
 
-public interface IGenerateBlogIndex : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
     int PostsPerPage => 10;
 
-    Target GenerateBlogIndex => _ => _
-        .DependsOn<IGenerateWebsite>(x => x.GenerateHtml)
-        .TriggeredBy<IGenerateWebsite>(x => x.GenerateHtml)
-        .Executes(() =>
+    public void GenerateBlogIndex()
+    {
+        Information("Generating paginated blog index...");
+
+        var posts = CollectPosts();
+
+        var templateContent = (TemplateDirectory / "template.html").ReadAllText();
+        var menu = BuildIndexMenu();
+        // At least one page: every theme links blog.html, even before the first post.
+        var totalPages = Math.Max(1, (int)Math.Ceiling((double)posts.Count / PostsPerPage));
+
+        for (var page = 1; page <= totalPages; page++)
         {
-            Information("Generating paginated blog index...");
+            var pagePosts = posts
+                .Skip((page - 1) * PostsPerPage)
+                .Take(PostsPerPage)
+                .ToList();
 
-            var posts = CollectPosts();
-
-            var templateContent = (TemplateDirectory / "template.html").ReadAllText();
-            var menu = BuildIndexMenu();
-            // At least one page: every theme links blog.html, even before the first post.
-            var totalPages = Math.Max(1, (int)Math.Ceiling((double)posts.Count / PostsPerPage));
-
-            for (var page = 1; page <= totalPages; page++)
+            var contentHtml = $"<h1>Blog{(page > 1 ? $" — Page {page}" : "")}</h1>\n";
+            if (pagePosts.Count == 0)
+                contentHtml += "<p>No posts yet.</p>\n";
+            foreach (var post in pagePosts)
             {
-                var pagePosts = posts
-                    .Skip((page - 1) * PostsPerPage)
-                    .Take(PostsPerPage)
-                    .ToList();
-
-                var contentHtml = $"<h1>Blog{(page > 1 ? $" — Page {page}" : "")}</h1>\n";
-                if (pagePosts.Count == 0)
-                    contentHtml += "<p>No posts yet.</p>\n";
-                foreach (var post in pagePosts)
-                {
-                    contentHtml += "<article style=\"margin-bottom: 1.5rem;\">\n";
-                    contentHtml += $"  <h2><a href=\"{post.Url}\">{post.Title}</a></h2>\n";
-                    if (!string.IsNullOrEmpty(post.Date))
-                        contentHtml += $"  <small><time datetime=\"{post.Date}\">{post.Date}</time></small>\n";
-                    if (!string.IsNullOrEmpty(post.Description))
-                        contentHtml += $"  <p>{post.Description}</p>\n";
-                    contentHtml += "</article>\n";
-                }
-
-                contentHtml += BuildPaginationNav(page, totalPages, $"{BasePath}/blog");
-
-                var pageUrl = page == 1
-                    ? $"{SiteBaseUrl.TrimEnd('/')}/blog.html"
-                    : $"{SiteBaseUrl.TrimEnd('/')}/blog/page/{page}.html";
-
-                var templateData = new
-                {
-                    site_title = SiteTitle,
-                    page_title = page == 1 ? "Blog" : $"Blog — Page {page}",
-                    description = "Blog posts",
-                    keywords = "",
-                    author = "",
-                    date = "",
-                    iso_date = "",
-                    og_type = "website",
-                    schema_type = "WebPage",
-                    content = contentHtml,
-                    toc = "",
-                    page_url = pageUrl,
-                    canonical_url = pageUrl,
-                    image_url = "",
-                    base_path = BasePath,
-                    menu,
-                    tags = Array.Empty<object>()
-                };
-
-                var finalHtml = Template.Parse(templateContent).Render(templateData);
-
-                if (page == 1)
-                {
-                    var outputFile = OutputDirectory / "blog.html";
-                    outputFile.WriteAllText(finalHtml);
-                    Information("Generated blog index: {File}", outputFile);
-                }
-                else
-                {
-                    var pageDir = OutputDirectory / "blog" / "page";
-                    pageDir.CreateDirectory();
-                    var outputFile = pageDir / $"{page}.html";
-                    outputFile.WriteAllText(finalHtml);
-                    Information("Generated blog page {Page}: {File}", page, outputFile);
-                }
+                contentHtml += "<article style=\"margin-bottom: 1.5rem;\">\n";
+                contentHtml += $"  <h2><a href=\"{post.Url}\">{post.Title}</a></h2>\n";
+                if (!string.IsNullOrEmpty(post.Date))
+                    contentHtml += $"  <small><time datetime=\"{post.Date}\">{post.Date}</time></small>\n";
+                if (!string.IsNullOrEmpty(post.Description))
+                    contentHtml += $"  <p>{post.Description}</p>\n";
+                contentHtml += "</article>\n";
             }
 
-            Information("Blog index generated: {PostCount} posts across {PageCount} pages",
-                posts.Count, totalPages);
-        });
+            contentHtml += BuildPaginationNav(page, totalPages, $"{BasePath}/blog");
+
+            var pageUrl = page == 1
+                ? $"{SiteBaseUrl.TrimEnd('/')}/blog.html"
+                : $"{SiteBaseUrl.TrimEnd('/')}/blog/page/{page}.html";
+
+            var templateData = new
+            {
+                site_title = SiteTitle,
+                page_title = page == 1 ? "Blog" : $"Blog — Page {page}",
+                description = "Blog posts",
+                keywords = "",
+                author = "",
+                date = "",
+                iso_date = "",
+                og_type = "website",
+                schema_type = "WebPage",
+                content = contentHtml,
+                toc = "",
+                page_url = pageUrl,
+                canonical_url = pageUrl,
+                image_url = "",
+                base_path = BasePath,
+                menu,
+                tags = Array.Empty<object>()
+            };
+
+            var finalHtml = Template.Parse(templateContent).Render(templateData);
+
+            if (page == 1)
+            {
+                var outputFile = OutputDirectory / "blog.html";
+                outputFile.WriteAllText(finalHtml);
+                Information("Generated blog index: {File}", outputFile);
+            }
+            else
+            {
+                var pageDir = OutputDirectory / "blog" / "page";
+                pageDir.CreateDirectory();
+                var outputFile = pageDir / $"{page}.html";
+                outputFile.WriteAllText(finalHtml);
+                Information("Generated blog page {Page}: {File}", page, outputFile);
+            }
+        }
+
+        Information("Blog index generated: {PostCount} posts across {PageCount} pages",
+            posts.Count, totalPages);
+    }
 
     private List<BlogPost> CollectPosts()
     {

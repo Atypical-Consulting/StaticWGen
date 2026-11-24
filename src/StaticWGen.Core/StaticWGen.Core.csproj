@@ -15,6 +15,18 @@
     <PackageReference Include="Markdig" Version="1.6.0" />
     <PackageReference Include="Scriban" Version="7.6.1" />
     <PackageReference Include="YamlDotNet" Version="18.1.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
+    <PackageReference Include="Nuke.Utilities" Version="10.1.0" />
+    <PackageReference Include="Nuke.Utilities.IO.Globbing" Version="10.1.0" />
+    <PackageReference Include="Serilog" Version="4.4.0" />
+    <PackageReference Include="SkiaSharp" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
+    <PackageReference Include="WebMarkupMin.Core" Version="2.24.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="StaticWGen.Core.Models" />
+    <Using Include="StaticWGen.Core.Services" />
   </ItemGroup>
 
 </Project>

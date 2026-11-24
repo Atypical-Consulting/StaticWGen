@@ -58,29 +58,18 @@ A static website generator powered by [NUKE](https://nuke.build/), [Markdig](htt
 
 ## Architecture
 
+The generator is a library, `StaticWGen.Core`: a `Site` holds the settings and runs the pipeline. `./build.sh` (NUKE) is a thin front-end over it.
+
 ```mermaid
 graph LR
     A[input/*.md] --> B[GenerateHtml]
-    B --> C[output/*.html]
-    B --> D[GenerateTagPages]
-    B --> E[GenerateSitemap]
-    B --> F[GenerateRobotsTxt]
-    B --> G[GenerateFeed]
-    B --> H[GenerateBlogIndex]
-    D --> I[output/tags/*.html]
-    E --> J[output/sitemap.xml]
-    F --> K[output/robots.txt]
-    G --> L[output/feed.xml]
-    H --> M[output/blog.html]
-    C & I & J & K & L & M --> N[BuildWebsite]
-    N --> O[OptimizeImages]
-    O --> P[OptimizeOutput]
-    P --> Q[Validate]
-    P --> R[CompressOutput]
-    N --> S[BuildDockerImage]
-    S --> T[DeployDockerImage]
-    N --> U[GenerateBuildReport]
-    N --> V[GenerateSearchIndex]
+    B --> C[Blog index · Tag pages · Feed · robots.txt · Sitemap]
+    C --> D[Copy theme CSS/JS + assets]
+    D --> E[OptimizeImages]
+    E --> F[OptimizeOutput]
+    F --> G[GenerateSearchIndex]
+    G --> H[Validate]
+    H --> I[site.zip + build-report.json]
 ```
 
 ## Quick Start
@@ -334,34 +323,17 @@ Place images and other assets in `input/assets/`. They are copied to `output/ass
 
 ## Build Targets Reference
 
-| Target | Depends On | Description |
-|--------|-----------|-------------|
-| `ValidateConfig` | — | Validates configuration parameters and loads `.env` |
-| `Clean` | — | Deletes the output directory |
-| `GenerateHtml` | Clean | Converts Markdown files to HTML using the template |
-| `GenerateBlogIndex` | GenerateHtml | Generates paginated blog index at `/blog.html` |
-| `GenerateTagPages` | GenerateHtml | Generates tag index and individual tag pages |
-| `GenerateSitemap` | GenerateHtml | Generates `sitemap.xml` from all HTML files |
-| `GenerateRobotsTxt` | GenerateHtml | Generates `robots.txt` |
-| `GenerateFeed` | GenerateHtml | Generates Atom `feed.xml` from dated content |
-| `GenerateSearchIndex` | GenerateHtml | Generates `search-index.json` for client-side search |
-| `CopyAssets` | Clean | Copies `input/assets/` to `output/assets/` |
-| `CopyJsScripts` | Clean | Copies `themes/{Theme}/js/` to `output/js/` |
-| `CopyCss` | Clean | Copies `themes/{Theme}/css/` to `output/css/` |
-| `BuildWebsite` | All above | Orchestrates the full site generation |
-| `OptimizeImages` | CopyAssets | Resizes images, generates WebP, adds lazy loading |
-| `OptimizeOutput` | BuildWebsite | Minifies HTML and fingerprints CSS/JS assets |
-| `Validate` | OptimizeOutput | Validates HTML, accessibility, SEO, and links |
-| `GenerateBuildReport` | BuildWebsite | Generates `build-report.json` with build statistics |
-| `CompressOutput` | OptimizeOutput | Creates `site.zip` from the output directory |
-| `BuildDockerImage` | BuildWebsite | Builds an nginx Docker image with the site |
-| `DeployDockerImage` | BuildDockerImage | Runs the Docker container locally |
-| `Watch` | BuildWebsite | Starts dev server with live reload on port 3000 |
-| `NewPost` | — | Scaffolds a new dated blog post |
-| `NewPage` | — | Scaffolds a new page |
-| `Init` | — | Initializes project structure |
+| Target | Description |
+|--------|-------------|
+| `BuildWebsite` | Validates the configuration, then generates, optimises, validates and zips the site (`Site.Build()`) |
+| `Watch` | Builds, then serves on port 3000 and rebuilds on change, with live reload |
+| `NewPost` | Scaffolds a new dated blog post (`--title`, `--tags`, `--author`) |
+| `NewPage` | Scaffolds a new page |
+| `Init` | Creates `input/index.md`, `input/about.md` and `input/assets/` |
+| `BuildDockerImage` | Builds the nginx image with the site |
+| `DeployDockerImage` | Runs that image locally |
 
-Run any target with:
+`BuildWebsite` fails on a configuration error (missing title or URL, unknown theme) and on any `Validate` error (HTML structure, accessibility, SEO, broken internal links). Run any target with:
 
 ```bash
 ./build.sh <TargetName> --site-base-url "..." --site-title "..."
@@ -444,7 +416,7 @@ Content transformers post-process each page's HTML after Markdown rendering and 
 
 ### Writing your own
 
-Add a class implementing `IContentTransformer` anywhere under `build/`. It is discovered by reflection at build time, so there is nothing to register:
+Add a class implementing `IContentTransformer` anywhere under `build/` (or in any app hosting `StaticWGen.Core`). It is discovered by reflection at build time, so there is nothing to register:
 
 ```csharp
 using System.Collections.Generic;
@@ -527,38 +499,15 @@ Planned work is tracked in the [open issues](https://github.com/Atypical-Consult
 
 ```
 StaticWGen/
-├── build/              # NUKE build targets (C# interfaces)
-│   ├── Build.cs        # Main build class
-│   ├── IHasWebsitePaths.cs  # Shared paths and core parameters
-│   ├── IClean.cs       # Clean target
-│   ├── IGenerateWebsite.cs  # HTML generation
-│   ├── IGenerateBlogIndex.cs # Paginated blog index
-│   ├── IGenerateFeed.cs     # Atom feed generation
-│   ├── IGenerateTagPages.cs # Tag page generation
-│   ├── IGenerateSearchIndex.cs # Search index generation
-│   ├── IGenerateBuildReport.cs # Build report generation
-│   ├── ISitemap.cs     # Sitemap generation
-│   ├── IRobotsTxt.cs   # robots.txt generation
-│   ├── IOptimizeImages.cs   # Image optimization
-│   ├── IOptimizeOutput.cs   # HTML minification & asset fingerprinting
-│   ├── IValidateConfig.cs   # Configuration validation
-│   ├── IValidateOutput.cs   # Output validation (HTML, a11y, SEO)
-│   ├── IWatch.cs       # Development server with live reload
-│   ├── IScaffold.cs    # Content scaffolding (NewPost, NewPage, Init)
-│   ├── ICompressOutput.cs   # Output compression
-│   ├── IDockerOperations.cs # Docker build & deploy
-│   └── Helpers/        # Shared utilities
+├── build/              # NUKE front-end (Build.cs): parameters → Site, targets
 ├── input/              # Markdown source files
 │   ├── assets/         # Static assets (images, etc.)
 │   └── *.md            # Content pages
-│   ├── template.html   # Scriban template
-│   ├── js/             # JavaScript files
-│   └── css/            # CSS files
 ├── themes/             # Theme variants
 │   ├── default/        # Default theme
 │   ├── docs/           # Documentation theme
 │   └── minimal/        # Minimal theme
-├── src/                # Core library source code
+├── src/StaticWGen.Core/ # The generator: Site/ (pipeline steps), Plugins/, Services/
 ├── tests/              # Test files
 ├── output/             # Generated site (git-ignored)
 ├── .github/workflows/  # CI/CD pipelines

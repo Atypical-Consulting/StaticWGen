@@ -9,74 +9,73 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using static Serilog.Log;
 
-public interface ISitemap : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
-    Target GenerateSitemap => _ => _
-        .DependsOn<IGenerateWebsite>(x => x.GenerateHtml)
-        .TriggeredBy<IGenerateWebsite>(x => x.GenerateHtml)
-        .Executes(() =>
+    public void GenerateSitemap()
+    {
+        Information("Generating enhanced sitemap.xml...");
+
+        var baseUrl = SiteBaseUrl.TrimEnd('/');
+        XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+        XNamespace image = "http://www.google.com/schemas/sitemap-image/1.1";
+
+        var htmlFiles = OutputDirectory.GlobFiles("**/*.html")
+            .Where(file => file.Name != "404.html")
+            .ToList();
+
+        var urlElements = new List<XElement>();
+
+        foreach (var file in htmlFiles)
         {
-            Information("Generating enhanced sitemap.xml...");
+            var relativePath = OutputDirectory.GetRelativePathTo(file).ToString().Replace('\\', '/');
+            var pageUrl = new Uri(new Uri(baseUrl + "/"), relativePath).AbsoluteUri;
+            var fileName = file.NameWithoutExtension;
 
-            var baseUrl = SiteBaseUrl.TrimEnd('/');
-            XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
-            XNamespace image = "http://www.google.com/schemas/sitemap-image/1.1";
+            // Try to get metadata from matching input markdown file
+            var metadata = TryGetMetadataForPage(fileName);
 
-            var htmlFiles = OutputDirectory.GlobFiles("**/*.html")
-                .Where(file => file.Name != "404.html")
-                .ToList();
+            // Determine lastmod
+            var lastmod = GetLastModified(file, metadata);
 
-            var urlElements = new List<XElement>();
+            // Determine changefreq and priority based on page type
+            var (changefreq, priority) = GetSitemapHints(fileName, relativePath, metadata);
 
-            foreach (var file in htmlFiles)
-            {
-                var relativePath = OutputDirectory.GetRelativePathTo(file).ToString().Replace('\\', '/');
-                var pageUrl = new Uri(new Uri(baseUrl + "/"), relativePath).AbsoluteUri;
-                var fileName = file.NameWithoutExtension;
-
-                // Try to get metadata from matching input markdown file
-                var metadata = TryGetMetadataForPage(fileName);
-
-                // Determine lastmod
-                var lastmod = GetLastModified(file, metadata);
-
-                // Determine changefreq and priority based on page type
-                var (changefreq, priority) = GetSitemapHints(fileName, relativePath, metadata);
-
-                var urlElement = new XElement(ns + "url",
-                    new XElement(ns + "loc", pageUrl),
-                    new XElement(ns + "lastmod", lastmod),
-                    new XElement(ns + "changefreq", changefreq),
-                    new XElement(ns + "priority", priority.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))
-                );
-
-                // Add image entries
-                var images = ExtractImages(file, baseUrl);
-                foreach (var img in images)
-                {
-                    urlElement.Add(new XElement(image + "image",
-                        new XElement(image + "loc", img.Url),
-                        new XElement(image + "title", img.Title)
-                    ));
-                }
-
-                urlElements.Add(urlElement);
-            }
-
-            var sitemap = new XDocument(
-                new XDeclaration("1.0", "UTF-8", null),
-                new XElement(ns + "urlset",
-                    new XAttribute(XNamespace.Xmlns + "image", image.NamespaceName),
-                    urlElements
-                )
+            var urlElement = new XElement(ns + "url",
+                new XElement(ns + "loc", pageUrl),
+                new XElement(ns + "lastmod", lastmod),
+                new XElement(ns + "changefreq", changefreq),
+                new XElement(ns + "priority", priority.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))
             );
 
-            var sitemapPath = OutputDirectory / "sitemap.xml";
-            sitemap.Save(sitemapPath);
+            // Add image entries
+            var images = ExtractImages(file, baseUrl);
+            foreach (var img in images)
+            {
+                urlElement.Add(new XElement(image + "image",
+                    new XElement(image + "loc", img.Url),
+                    new XElement(image + "title", img.Title)
+                ));
+            }
 
-            Information("Enhanced sitemap.xml generated at {SitemapPath} with {Count} URLs",
-                sitemapPath, urlElements.Count);
-        });
+            urlElements.Add(urlElement);
+        }
+
+        var sitemap = new XDocument(
+            new XDeclaration("1.0", "UTF-8", null),
+            new XElement(ns + "urlset",
+                new XAttribute(XNamespace.Xmlns + "image", image.NamespaceName),
+                urlElements
+            )
+        );
+
+        var sitemapPath = OutputDirectory / "sitemap.xml";
+        sitemap.Save(sitemapPath);
+
+        Information("Enhanced sitemap.xml generated at {SitemapPath} with {Count} URLs",
+            sitemapPath, urlElements.Count);
+    }
 
     private Dictionary<string, string> TryGetMetadataForPage(string fileName)
     {
