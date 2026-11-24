@@ -446,7 +446,7 @@ docker run -d -p 8080:80 --name my-site my-site
 
 - **.NET 10**
 - HtmlAgilityPack
-- SixLabors.ImageSharp
+- SkiaSharp
 - WebMarkupMin.Core
 - Markdig
 - Nuke.Common

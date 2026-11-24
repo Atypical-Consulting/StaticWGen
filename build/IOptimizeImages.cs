@@ -5,9 +5,7 @@ using System.Linq;
 using HtmlAgilityPack;
 using Nuke.Common;
 using Nuke.Common.IO;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.Processing;
+using SkiaSharp;
 using static Serilog.Log;
 
 public interface IOptimizeImages : IHasWebsitePaths
@@ -58,24 +56,18 @@ public interface IOptimizeImages : IHasWebsitePaths
 
                 try
                 {
-                    using var image = Image.Load(file);
-                    var resized = false;
+                    var image = SKBitmap.Decode(file.ToString())
+                        ?? throw new InvalidOperationException("unsupported or corrupt image");
 
                     // Resize if wider than max width
                     if (image.Width > ImageMaxWidth)
                     {
-                        image.Mutate(x => x.Resize(new ResizeOptions
-                        {
-                            Mode = ResizeMode.Max,
-                            Size = new Size(ImageMaxWidth, 0)
-                        }));
-                        resized = true;
-                    }
-
-                    // Save optimized original
-                    if (resized)
-                    {
-                        image.Save(file);
+                        var height = (int)Math.Round(image.Height * (double)ImageMaxWidth / image.Width);
+                        var resized = image.Resize(new SKImageInfo(ImageMaxWidth, height),
+                            new SKSamplingOptions(SKCubicResampler.Mitchell));
+                        image.Dispose();
+                        image = resized;
+                        Save(image, file, FormatFor(ext), ImageQuality);
                         Information("  Resized: {File} to {Width}px", file.Name, image.Width);
                     }
 
@@ -85,10 +77,11 @@ public interface IOptimizeImages : IHasWebsitePaths
                         var webpPath = Path.ChangeExtension(file, ".webp");
                         if (!File.Exists(webpPath))
                         {
-                            image.Save(webpPath, new WebpEncoder { Quality = ImageQuality });
+                            Save(image, webpPath, SKEncodedImageFormat.Webp, ImageQuality);
                             webpGenerated++;
                         }
                     }
+                    image.Dispose();
 
                     optimizedSize += new FileInfo(file).Length;
                 }
@@ -155,11 +148,11 @@ public interface IOptimizeImages : IHasWebsitePaths
                     {
                         try
                         {
-                            var info = Image.Identify(imgPath);
-                            if (info != null)
+                            using var codec = SKCodec.Create(imgPath.ToString());
+                            if (codec != null)
                             {
-                                img.SetAttributeValue("width", info.Width.ToString());
-                                img.SetAttributeValue("height", info.Height.ToString());
+                                img.SetAttributeValue("width", codec.Info.Width.ToString());
+                                img.SetAttributeValue("height", codec.Info.Height.ToString());
                                 modified = true;
                             }
                         }
@@ -175,6 +168,20 @@ public interface IOptimizeImages : IHasWebsitePaths
                 file.WriteAllText(writer.ToString());
             }
         }
+    }
+
+    private static SKEncodedImageFormat FormatFor(string ext) => ext switch
+    {
+        ".png" => SKEncodedImageFormat.Png,
+        ".webp" => SKEncodedImageFormat.Webp,
+        _ => SKEncodedImageFormat.Jpeg
+    };
+
+    private static void Save(SKBitmap image, string path, SKEncodedImageFormat format, int quality)
+    {
+        using var data = image.Encode(format, quality)
+            ?? throw new InvalidOperationException($"could not encode {format}");
+        File.WriteAllBytes(path, data.ToArray());
     }
 
     private static string FormatBytes(long bytes)
