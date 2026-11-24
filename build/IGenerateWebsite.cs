@@ -54,8 +54,8 @@ public interface IGenerateWebsite : IHasWebsitePaths
 
             foreach (var file in markdownFiles)
             {
-                var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
-                var status = MarkdownHelper.GetContentStatus(metadata, IncludeDrafts);
+                var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
+                var status = MarkdownService.GetContentStatus(metadata, IncludeDrafts);
 
                 switch (status)
                 {
@@ -92,8 +92,8 @@ public interface IGenerateWebsite : IHasWebsitePaths
             var menuFiles = publishableFiles
                 .Where(f =>
                 {
-                    var (m, _) = MarkdownHelper.ParseMarkdownFile(f);
-                    return MarkdownHelper.GetContentStatus(m) != ContentStatus.Archived;
+                    var (m, _) = MarkdownService.ParseMarkdownFile(f);
+                    return MarkdownService.GetContentStatus(m) != ContentStatus.Archived;
                 })
                 .ToList();
             var menu = GenerateMenu(menuFiles);
@@ -196,7 +196,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
             .Select(file =>
             {
                 var slug = file.NameWithoutExtension;
-                var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+                var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
                 var title = metadata.TryGetValue("title", out var t) && !string.IsNullOrWhiteSpace(t)
                     ? t
                     : slug;
@@ -227,32 +227,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
 
             var content = file.ReadAllText();
 
-            // Use shared pipeline with all extensions
-            var markdownPipeline = MarkdownHelper.CreatePipeline();
-
-            // Register custom code block renderer that handles Mermaid and Prism together
-            var writer = new StringWriter();
-            var htmlRenderer = new HtmlRenderer(writer);
-            markdownPipeline.Setup(htmlRenderer);
-            var defaultCodeBlockRenderer = htmlRenderer.ObjectRenderers.FindExact<CodeBlockRenderer>();
-            if (defaultCodeBlockRenderer != null)
-                htmlRenderer.ObjectRenderers.Remove(defaultCodeBlockRenderer);
-            htmlRenderer.ObjectRenderers.AddIfNotAlready(new MermaidAwareCodeBlockRenderer());
-
-            // Parse the Markdown document
-            var markdownDocument = Markdown.Parse(content, markdownPipeline);
-
-            // Extract YAML front matter
-            var metadata = MarkdownHelper.ExtractMetadata(markdownDocument, content, file.Name);
-
-            // Remove the YAML front matter from the content
-            var markdownContent = MarkdownHelper.RemoveFrontMatter(markdownDocument, content);
-
-            // Convert Markdown to HTML using custom renderer
-            var markdownDoc2 = Markdown.Parse(markdownContent, markdownPipeline);
-            htmlRenderer.Render(markdownDoc2);
-            writer.Flush();
-            var htmlContent = writer.ToString();
+            var (metadata, htmlContent) = MarkdownService.RenderPage(content, file.Name, w => Warning("{Message:l}", w));
 
             // Apply content transformer plugins
             htmlContent = ContentTransformerPipeline.Apply(htmlContent, metadata);
@@ -376,7 +351,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
 
         foreach (var f in allFiles)
         {
-            var (m, _) = MarkdownHelper.ParseMarkdownFile(f);
+            var (m, _) = MarkdownService.ParseMarkdownFile(f);
             var fTranslation = m.TryGetValue("translationOf", out var ft) ? ft : "";
             if (fTranslation != translationOf)
                 continue;
@@ -527,37 +502,5 @@ public interface IGenerateWebsite : IHasWebsitePaths
         public required string Title { get; init; }
         public required string Url { get; init; }
         public bool Hidden { get; init; }
-    }
-}
-
-public class MermaidAwareCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
-{
-    protected override void Write(HtmlRenderer renderer, CodeBlock obj)
-    {
-        if (obj is FencedCodeBlock fencedCodeBlock)
-        {
-            var language = fencedCodeBlock.Info ?? "plaintext";
-
-            if (string.Equals(language, "mermaid", StringComparison.OrdinalIgnoreCase))
-            {
-                // Render mermaid blocks without <code> wrapper so Mermaid.js can process them
-                renderer.Write("<pre class=\"mermaid\">");
-                renderer.WriteLeafRawLines(obj, true, true);
-                renderer.WriteLine("</pre>");
-            }
-            else
-            {
-                // Render other code blocks with Prism-compatible language class
-                renderer.Write("<pre><code class=\"language-").Write(language).Write("\">");
-                renderer.WriteLeafRawLines(obj, true, true);
-                renderer.WriteLine("</code></pre>");
-            }
-        }
-        else
-        {
-            renderer.Write("<pre><code>");
-            renderer.WriteLeafRawLines(obj, true, true);
-            renderer.WriteLine("</code></pre>");
-        }
     }
 }

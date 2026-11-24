@@ -48,10 +48,10 @@ public interface IGenerateFeed : IHasWebsitePaths
 
         foreach (var file in markdownFiles)
         {
-            var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+            var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
 
             // Skip drafts, scheduled, excluded, and archived content from feed
-            var status = MarkdownHelper.GetContentStatus(metadata);
+            var status = MarkdownService.GetContentStatus(metadata);
             if (status != ContentStatus.Published)
                 continue;
 

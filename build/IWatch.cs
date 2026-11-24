@@ -169,24 +169,7 @@ public interface IWatch : IHasWebsitePaths
     private void RebuildMarkdownFile(AbsolutePath file, string templateContent)
     {
         var content = file.ReadAllText();
-        var pipeline = MarkdownHelper.CreatePipeline();
-
-        var writer = new StringWriter();
-        var htmlRenderer = new HtmlRenderer(writer);
-        pipeline.Setup(htmlRenderer);
-        var defaultRenderer = htmlRenderer.ObjectRenderers.FindExact<CodeBlockRenderer>();
-        if (defaultRenderer != null)
-            htmlRenderer.ObjectRenderers.Remove(defaultRenderer);
-        htmlRenderer.ObjectRenderers.AddIfNotAlready(new MermaidAwareCodeBlockRenderer());
-
-        var document = Markdown.Parse(content, pipeline);
-        var metadata = MarkdownHelper.ExtractMetadata(document, content, file.Name);
-        var markdownContent = MarkdownHelper.RemoveFrontMatter(document, content);
-
-        var doc2 = Markdown.Parse(markdownContent, pipeline);
-        htmlRenderer.Render(doc2);
-        writer.Flush();
-        var htmlContent = writer.ToString();
+        var (metadata, htmlContent) = MarkdownService.RenderPage(content, file.Name, w => Warning("{Message:l}", w));
 
         var pageTitle = metadata.TryGetValue("title", out var t) ? t : file.NameWithoutExtension;
         var templateData = new

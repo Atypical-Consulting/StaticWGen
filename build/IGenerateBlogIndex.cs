@@ -108,10 +108,10 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
             if (!datePattern.IsMatch(file.NameWithoutExtension))
                 continue;
 
-            var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+            var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
 
             // Skip drafts, scheduled, excluded, and translation files
-            var status = MarkdownHelper.GetContentStatus(metadata);
+            var status = MarkdownService.GetContentStatus(metadata);
             if (status == ContentStatus.Excluded)
                 continue;
             if (metadata.ContainsKey("translationOf") && file.NameWithoutExtension.Contains('.'))
@@ -170,13 +170,13 @@ public interface IGenerateBlogIndex : IHasWebsitePaths
         return markdownFiles
             .Where(file =>
             {
-                var (m, _) = MarkdownHelper.ParseMarkdownFile(file);
-                return MarkdownHelper.GetContentStatus(m) != ContentStatus.Excluded;
+                var (m, _) = MarkdownService.ParseMarkdownFile(file);
+                return MarkdownService.GetContentStatus(m) != ContentStatus.Excluded;
             })
             .Select(file =>
             {
                 var slug = file.NameWithoutExtension;
-                var (metadata, _) = MarkdownHelper.ParseMarkdownFile(file);
+                var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
                 var title = metadata.TryGetValue("title", out var t) && !string.IsNullOrWhiteSpace(t)
                     ? t
                     : slug;

@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Extensions.Yaml;
 using Markdig.Renderers;
@@ -10,7 +9,8 @@ using YamlDotNet.RepresentationModel;
 namespace StaticWGen.Core.Services;
 
 /// <summary>
-/// Core markdown processing service with no build-system dependency.
+/// The Markdown pipeline the site build, the dev server and the tests all share.
+/// Warnings (malformed front-matter, suspicious values) go to the optional <c>onWarning</c> callback.
 /// </summary>
 public static class MarkdownService
 {
@@ -32,38 +32,47 @@ public static class MarkdownService
             .Build();
     }
 
-    public static Dictionary<string, string> ExtractMetadata(string content, string? fileName = null)
+    public static Dictionary<string, string> ExtractMetadata(string content, string? fileName = null,
+        Action<string>? onWarning = null)
     {
-        var pipeline = CreateMinimalPipeline();
-        var document = Markdown.Parse(content, pipeline);
-        return ExtractMetadata(document, content);
+        var document = Markdown.Parse(content, CreateMinimalPipeline());
+        return ExtractMetadata(document, content, fileName, onWarning);
     }
 
-    public static Dictionary<string, string> ExtractMetadata(MarkdownDocument document, string content)
+    public static Dictionary<string, string> ExtractMetadata(MarkdownDocument document, string content,
+        string? fileName = null, Action<string>? onWarning = null)
     {
         var metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var context = fileName != null ? $" in {fileName}" : "";
+        void Warn(string message) => onWarning?.Invoke(message);
 
         var yamlBlock = document.Descendants<YamlFrontMatterBlock>().FirstOrDefault();
         if (yamlBlock == null)
             return metadata;
 
         var yaml = content.Substring(yamlBlock.Span.Start, yamlBlock.Span.Length);
-        YamlStream yamlStream;
+        var yamlStream = new YamlStream();
         try
         {
-            yamlStream = new YamlStream();
             yamlStream.Load(new StringReader(yaml));
         }
-        catch
+        catch (Exception ex)
         {
+            Warn($"Malformed YAML front-matter{context}: {ex.Message}");
             return metadata;
         }
 
         if (yamlStream.Documents.Count == 0)
+        {
+            Warn($"Empty YAML front-matter{context}");
             return metadata;
+        }
 
         if (yamlStream.Documents[0].RootNode is not YamlMappingNode rootNode)
+        {
+            Warn($"YAML front-matter root is not a mapping{context}");
             return metadata;
+        }
 
         foreach (var entry in rootNode.Children)
         {
@@ -78,24 +87,38 @@ public static class MarkdownService
                 _ => null
             };
 
-            if (value != null)
-                metadata[keyNode.Value] = value;
+            if (value == null)
+            {
+                Warn($"Unsupported YAML value type for key '{keyNode.Value}'{context} (expected scalar or sequence)");
+                continue;
+            }
+
+            metadata[keyNode.Value] = value;
         }
+
+        if (metadata.TryGetValue("date", out var dateStr) && !string.IsNullOrEmpty(dateStr) &&
+            !DateTime.TryParse(dateStr, out _))
+            Warn($"Invalid date format '{dateStr}'{context} — expected a parseable date (e.g., 2024-09-13)");
+
+        if (metadata.TryGetValue("image", out var imageStr) && !string.IsNullOrEmpty(imageStr) &&
+            !imageStr.StartsWith("./") && !imageStr.StartsWith("/") &&
+            !imageStr.StartsWith("http://") && !imageStr.StartsWith("https://") &&
+            !imageStr.Contains('.'))
+            Warn($"Image value '{imageStr}'{context} does not look like a valid path or URL");
 
         return metadata;
     }
 
+    public static string RemoveFrontMatter(string content) =>
+        RemoveFrontMatter(Markdown.Parse(content, CreateMinimalPipeline()), content);
+
     public static string RemoveFrontMatter(MarkdownDocument document, string content)
     {
         var yamlBlock = document.Descendants<YamlFrontMatterBlock>().FirstOrDefault();
-        if (yamlBlock != null)
-        {
-            var contentStart = yamlBlock.Span.End + 1;
-            return content.Substring(contentStart).TrimStart();
-        }
-        return content;
+        return yamlBlock != null ? content.Substring(yamlBlock.Span.End + 1).TrimStart() : content;
     }
 
+    /// <summary>Converts Markdown (without front-matter) to HTML, rendering Mermaid and Prism code blocks.</summary>
     public static string ConvertToHtml(string markdownContent)
     {
         var pipeline = CreatePipeline();
@@ -108,19 +131,28 @@ public static class MarkdownService
             htmlRenderer.ObjectRenderers.Remove(defaultRenderer);
         htmlRenderer.ObjectRenderers.AddIfNotAlready(new MermaidAwareCodeBlockRenderer());
 
-        var document = Markdown.Parse(markdownContent, pipeline);
-        htmlRenderer.Render(document);
+        htmlRenderer.Render(Markdown.Parse(markdownContent, pipeline));
         writer.Flush();
         return writer.ToString();
     }
 
-    public static (Dictionary<string, string> Metadata, string Content) ParseMarkdownFile(string fileContent, string? fileName = null)
+    /// <summary>Parses a full page (front-matter + body) into its metadata and rendered HTML body.</summary>
+    public static (Dictionary<string, string> Metadata, string Html) RenderPage(string content,
+        string? fileName = null, Action<string>? onWarning = null)
     {
-        var pipeline = CreateMinimalPipeline();
-        var document = Markdown.Parse(fileContent, pipeline);
-        var metadata = ExtractMetadata(document, fileContent);
-        var markdownContent = RemoveFrontMatter(document, fileContent);
-        return (metadata, markdownContent);
+        var document = Markdown.Parse(content, CreatePipeline());
+        var metadata = ExtractMetadata(document, content, fileName, onWarning);
+        return (metadata, ConvertToHtml(RemoveFrontMatter(document, content)));
+    }
+
+    /// <summary>Reads a Markdown file and returns its metadata and its body without front-matter.</summary>
+    public static (Dictionary<string, string> Metadata, string Content) ParseMarkdownFile(string path,
+        Action<string>? onWarning = null)
+    {
+        var content = File.ReadAllText(path);
+        var document = Markdown.Parse(content, CreateMinimalPipeline());
+        var metadata = ExtractMetadata(document, content, Path.GetFileName(path), onWarning);
+        return (metadata, RemoveFrontMatter(document, content));
     }
 
     public static ContentStatus GetContentStatus(Dictionary<string, string> metadata, bool includeDrafts = false)
@@ -151,12 +183,14 @@ public class MermaidAwareCodeBlockRenderer : HtmlObjectRenderer<CodeBlock>
             var language = fencedCodeBlock.Info ?? "plaintext";
             if (string.Equals(language, "mermaid", StringComparison.OrdinalIgnoreCase))
             {
+                // No <code> wrapper, so Mermaid.js can process the block
                 renderer.Write("<pre class=\"mermaid\">");
                 renderer.WriteLeafRawLines(obj, true, true);
                 renderer.WriteLine("</pre>");
             }
             else
             {
+                // Prism-compatible language class
                 renderer.Write("<pre><code class=\"language-").Write(language).Write("\">");
                 renderer.WriteLeafRawLines(obj, true, true);
                 renderer.WriteLine("</code></pre>");

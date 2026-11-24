@@ -30,6 +30,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\StaticWGen.Core\StaticWGen.Core.csproj" />
+    <Using Include="StaticWGen.Core.Models" />
+    <Using Include="StaticWGen.Core.Services" />
   </ItemGroup>
 
   <ItemGroup>

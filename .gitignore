@@ -57,4 +57,5 @@ _dotTrace*
 .DS_Store
 
 # Tests
-*.received.txtsite.zip
+*.received.txt
+site.zip
