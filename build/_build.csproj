@@ -2,23 +2,30 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <RootNamespace></RootNamespace>
     <NoWarn>CS0649;CS0169;CA1050;CA1822;CA2211;IDE1006</NoWarn>
     <NukeRootDirectory>..</NukeRootDirectory>
     <NukeScriptDirectory>..</NukeScriptDirectory>
     <NukeTelemetryVersion>1</NukeTelemetryVersion>
     <IsPackable>false</IsPackable>
+    <!-- .NET 11 dotnet run launches the apphost; Nuke 10.1 asserts the entry path is the .dll -->
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.2.0" />
-    <PackageReference Include="WebMarkupMin.Core" Version="2.24.0" />
+    <PackageReference Include="SkiaSharp" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
+    <PackageReference Include="WebMarkupMin.Core" Version="2.24.2" />
     <PackageReference Include="Markdig" Version="1.6.0" />
     <PackageReference Include="Nuke.Common" Version="10.1.0" />
     <PackageReference Include="Scriban" Version="7.6.1" />
     <PackageReference Include="WebStoating.Markdig.Prism" Version="1.0.0" />
+    <!-- Pin vulnerable transitive deps pulled by Nuke.Common -->
+    <PackageReference Include="NuGet.Packaging" Version="8.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="11.0.0" />
   </ItemGroup>
 
   <ItemGroup>
