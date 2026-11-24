@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "1832a4a8619fef630829870c809a2f50a010a291",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "staticwgen",
+      "include-component-in-tag": false,
+      "bump-minor-pre-major": true,
+      "changelog-path": "CHANGELOG.md",
+      "changelog-sections": [
+        { "type": "feat", "section": "Added" },
+        { "type": "fix", "section": "Fixed" },
+        { "type": "perf", "section": "Performance" },
+        { "type": "refactor", "section": "Changed" },
+        { "type": "revert", "section": "Reverted" },
+        { "type": "docs", "section": "Documentation" },
+        { "type": "build", "section": "Changed" },
+        { "type": "ci", "section": "Changed" },
+        { "type": "chore", "section": "Miscellaneous", "hidden": true },
+        { "type": "style", "section": "Miscellaneous", "hidden": true },
+        { "type": "test", "section": "Miscellaneous", "hidden": true }
+      ]
+    }
+  }
+}
