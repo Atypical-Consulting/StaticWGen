@@ -36,7 +36,7 @@ public partial class Site
         foreach (var file in markdownFiles)
         {
             var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
-            var status = MarkdownService.GetContentStatus(metadata, IncludeDrafts);
+            var status = StatusOf(metadata);
 
             switch (status)
             {
@@ -74,7 +74,7 @@ public partial class Site
             .Where(f =>
             {
                 var (m, _) = MarkdownService.ParseMarkdownFile(f);
-                return MarkdownService.GetContentStatus(m) != ContentStatus.Archived;
+                return StatusOf(m) != ContentStatus.Archived;
             })
             .ToList();
         var menu = GenerateMenu(menuFiles);

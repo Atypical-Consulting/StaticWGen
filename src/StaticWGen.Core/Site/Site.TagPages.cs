@@ -44,7 +44,7 @@ public partial class Site
             var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
 
             // Skip drafts, scheduled, excluded, and translation files
-            var status = MarkdownService.GetContentStatus(metadata);
+            var status = StatusOf(metadata);
             if (status == ContentStatus.Excluded)
                 continue;
             if (metadata.ContainsKey("translationOf") && file.NameWithoutExtension.Contains('.'))
@@ -213,7 +213,7 @@ public partial class Site
             .Where(file =>
             {
                 var (m, _) = MarkdownService.ParseMarkdownFile(file);
-                return MarkdownService.GetContentStatus(m) != ContentStatus.Excluded;
+                return StatusOf(m) != ContentStatus.Excluded;
             })
             .Select(file =>
             {

@@ -132,8 +132,7 @@ public partial class Site
         Information("");
         Information("Project initialized! Next steps:");
         Information("  1. Edit input/index.md and input/about.md");
-        Information("  2. Run: ./build.sh BuildWebsite --site-base-url \"http://localhost:8080\" --site-title \"{siteTitle}\"");
-        Information("  3. Open output/index.html in your browser");
+        Information("  2. Preview: staticwgen serve (or ./build.sh Watch in a StaticWGen checkout)");
     }
 
     static string GenerateSlug(string title)

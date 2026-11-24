@@ -78,6 +78,25 @@ graph LR
 
 - [.NET 11 SDK](https://dotnet.microsoft.com/download) (or later)
 
+### The `staticwgen` CLI
+
+The generator ships as a `dotnet tool` (until it is on NuGet, install it from a checkout):
+
+```bash
+dotnet pack src/StaticWGen.Cli -c Release -o ./nupkg
+dotnet tool install -g StaticWGen --add-source ./nupkg
+
+staticwgen new my-site --site-title "My Site"   # themes/, input/, staticwgen.yaml
+cd my-site
+staticwgen new-post "Hello world" --tags "dotnet, web"
+staticwgen serve                                # http://localhost:3000, rebuilds on change
+staticwgen build                                # output/ + site.zip, fails on validation errors
+```
+
+Every site setting is both an option and a key of `staticwgen.yaml` (`--site-base-url` / `site_base_url`, `--theme`, `--include-drafts`, `--minify-html false`, …); options override the file. `staticwgen --help` lists the commands.
+
+The rest of this README uses `./build.sh`, the NUKE front-end of this repository, which takes the same settings as `--parameters`.
+
 ### 1. Create your site from the template
 
 StaticWGen is a GitHub template repository: click **Use this template → Create a new repository** (or run `gh repo create my-site --template Atypical-Consulting/StaticWGen --public --clone`). Your repository starts with a single commit and everything below works in it unchanged: CI derives the site URL and title from the repository name, and GitHub Pages deploys on every push to `dev` once you set **Settings → Pages → Source** to *GitHub Actions*.

@@ -56,7 +56,7 @@ class Build : NukeBuild
         AnalyticsScriptUrl = AnalyticsScriptUrl,
         IncludeDrafts = IncludeDrafts,
         ContinueOnError = ContinueOnError,
-        FeedTitleOverride = FeedTitle,
+        FeedTitle = FeedTitle,
         FeedDescription = FeedDescription,
         FeedAuthor = FeedAuthor,
         ImageMaxWidth = ImageMaxWidth,
