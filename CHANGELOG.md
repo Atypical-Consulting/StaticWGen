@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/Atypical-Consulting/StaticWGen/compare/v0.2.0...v0.3.0) (2026-11-24)
+
+
+### Added
+
+* **cli:** ship the generator as the staticwgen dotnet tool ([#152](https://github.com/Atypical-Consulting/StaticWGen/issues/152)) ([50a0a78](https://github.com/Atypical-Consulting/StaticWGen/commit/50a0a784b31a0e9e6a164554952a93ec82860c85))
+
+
+### Changed
+
+* move the generator engine from the NUKE build into StaticWGen.Core ([#150](https://github.com/Atypical-Consulting/StaticWGen/issues/150)) ([cd765ab](https://github.com/Atypical-Consulting/StaticWGen/commit/cd765abc9389c73cf988808e3ae75d031d726823))
+
 ## [0.2.0](https://github.com/Atypical-Consulting/StaticWGen/compare/v0.1.1...v0.2.0) (2026-11-24)
 
 
