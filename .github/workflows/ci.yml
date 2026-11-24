@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [dev]
   pull_request:
-    branches: [main, dev]
+    branches: [dev]
 
 jobs:
   build:
@@ -43,6 +43,9 @@ jobs:
           echo "All expected files present."
           echo "Generated files:"
           find output -type f | sort
+
+      - name: Smoke-test the Docker image
+        run: bash scripts/smoke-test-image.sh
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v7

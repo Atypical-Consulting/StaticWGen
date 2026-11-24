@@ -4,7 +4,6 @@
 .claude
 build
 input
-template
 tests
 node_modules
 *.sln

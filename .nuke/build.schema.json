@@ -228,7 +228,7 @@
         },
         "Theme": {
           "type": "string",
-          "description": "Theme name (directory under themes/ or template/ for legacy)"
+          "description": "Theme name (directory under themes/)"
         },
         "Title": {
           "type": "string",
