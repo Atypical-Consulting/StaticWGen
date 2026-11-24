@@ -31,8 +31,7 @@ public partial class Site(AbsolutePath rootDirectory)
     public string AnalyticsScriptUrl { get; set; } = "";
 
     // Feed (title defaults to SiteTitle)
-    public string? FeedTitleOverride { get; set; }
-    public string FeedTitle => FeedTitleOverride ?? SiteTitle;
+    public string FeedTitle { get => string.IsNullOrEmpty(field) ? SiteTitle : field; set; } = "";
     public string FeedDescription { get; set; } = "";
     public string FeedAuthor { get; set; } = "";
 
@@ -106,10 +105,10 @@ public partial class Site(AbsolutePath rootDirectory)
         var errors = new List<string>();
 
         if (string.IsNullOrEmpty(SiteTitle))
-            errors.Add("SiteTitle is required. Set via --site-title, parameters.json, or NUKE_SITE_TITLE env var.");
+            errors.Add("SiteTitle is required: --site-title, or site_title in staticwgen.yaml (NUKE: .nuke/parameters.json, NUKE_SITE_TITLE).");
 
         if (string.IsNullOrEmpty(SiteBaseUrl))
-            errors.Add("SiteBaseUrl is required. Set via --site-base-url, parameters.json, or NUKE_SITE_BASE_URL env var.");
+            errors.Add("SiteBaseUrl is required: --site-base-url, or site_base_url in staticwgen.yaml (NUKE: .nuke/parameters.json, NUKE_SITE_BASE_URL).");
         else if (!Uri.IsWellFormedUriString(SiteBaseUrl, UriKind.Absolute))
             errors.Add($"SiteBaseUrl must be a valid absolute URL, got: {SiteBaseUrl}");
 

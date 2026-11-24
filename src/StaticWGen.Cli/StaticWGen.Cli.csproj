@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>StaticWGen.Cli</RootNamespace>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>staticwgen</ToolCommandName>
+    <!-- One package per platform, so an install only downloads its own SkiaSharp native library. -->
+    <ToolPackageRuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;linux-musl-x64;osx-arm64;osx-x64</ToolPackageRuntimeIdentifiers>
+    <RuntimeIdentifiers>$(ToolPackageRuntimeIdentifiers)</RuntimeIdentifiers>
+    <PackageId>StaticWGen</PackageId>
+    <Version>0.2.0</Version>
+    <Description>Static site generator for .NET: Markdown + YAML front-matter to a validated, SEO-ready static site.</Description>
+    <Authors>Philippe Matray</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Atypical-Consulting/StaticWGen</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Atypical-Consulting/StaticWGen</RepositoryUrl>
+    <PackageTags>static-site-generator;markdown;blog;cli</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\StaticWGen.Core\StaticWGen.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Bundled themes: `staticwgen new` copies them into the new site. -->
+  <ItemGroup>
+    <None Include="..\..\themes\**\*" LinkBase="themes" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

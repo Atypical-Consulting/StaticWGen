@@ -53,6 +53,21 @@ jobs:
       - name: Smoke-test the Docker image
         run: bash scripts/smoke-test-image.sh
 
+      # The packaged dotnet tool, installed the way users install it: new site, post, build.
+      - name: CLI end to end (staticwgen dotnet tool)
+        run: |
+          version=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/StaticWGen.Cli/StaticWGen.Cli.csproj)
+          dotnet pack src/StaticWGen.Cli -c Release -o "$RUNNER_TEMP/nupkg"
+          dotnet tool install StaticWGen --version "$version" --tool-path "$RUNNER_TEMP/tools" --add-source "$RUNNER_TEMP/nupkg"
+          sw="$RUNNER_TEMP/tools/staticwgen"
+          cd "$RUNNER_TEMP"
+          "$sw" new cli-site --site-title "CLI Site"
+          cd cli-site
+          "$sw" new-post "Hello CLI" --tags "ci"
+          "$sw" build --include-drafts
+          grep -q "Hello CLI" output/*-hello-cli.html
+          if "$sw" build --no-such-setting x; then echo "unknown setting must fail"; exit 1; fi
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
