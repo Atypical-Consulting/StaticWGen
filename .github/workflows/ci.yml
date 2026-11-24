@@ -33,8 +33,8 @@ jobs:
           for theme in $(ls themes | grep -vx default) default; do
             echo "::group::theme $theme"
             ./build.sh BuildWebsite --theme "$theme" \
-              --site-base-url "https://atypical-consulting.github.io/StaticWGen" \
-              --site-title "StaticWGen"
+              --site-base-url "https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}" \
+              --site-title "${GITHUB_REPOSITORY#*/}"
             echo "::endgroup::"
           done
 
@@ -67,3 +67,11 @@ jobs:
           name: build-report
           path: build-report.json
           retention-days: 30
+
+      # Last, because it replaces input/: the README's "Use this template" steps must
+      # produce a site that builds and validates with no posts yet.
+      - name: Build a fresh site the way the README describes
+        run: |
+          rm -rf input CHANGELOG.md
+          ./build.sh Init --title "My Site" --author "Me"
+          ./build.sh BuildWebsite --site-base-url "https://example.github.io/my-site" --site-title "My Site"
