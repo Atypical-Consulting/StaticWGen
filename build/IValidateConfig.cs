@@ -27,6 +27,9 @@ public interface IValidateConfig : IHasWebsitePaths
             else if (!Uri.IsWellFormedUriString(SiteBaseUrl, UriKind.Absolute))
                 errors.Add($"SiteBaseUrl must be a valid absolute URL, got: {SiteBaseUrl}");
 
+            if (!TemplateDirectory.DirectoryExists())
+                errors.Add($"Theme '{Theme}' not found: expected directory {TemplateDirectory}");
+
             // Validate optional parameters
             if (!string.IsNullOrEmpty(SiteBaseUrl) && SiteBaseUrl.EndsWith("/"))
                 Warning("SiteBaseUrl has a trailing slash. It will be trimmed during build.");

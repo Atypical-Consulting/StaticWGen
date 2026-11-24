@@ -46,7 +46,7 @@ StaticWGen/
   build/          # NUKE build interfaces (C#)
   src/            # Core library (Markdown processing)
   input/          # Content files (Markdown + assets)
-  template/       # Scriban HTML template
+  themes/         # Scriban HTML templates and assets
   output/         # Generated static site
 ```
 
