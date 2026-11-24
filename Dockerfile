@@ -3,6 +3,7 @@ FROM nginx:1.31-alpine
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx-security-headers.conf /etc/nginx/snippets/security-headers.conf
 
 # Copy the static website files to the nginx web root
 COPY ./output /usr/share/nginx/html
