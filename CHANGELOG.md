@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.1](https://github.com/Atypical-Consulting/StaticWGen/compare/v0.1.0...v0.1.1) (2026-11-24)
+
+
+### Fixed
+
+* **docker:** send security headers on every response and allow the hosts the site loads ([#142](https://github.com/Atypical-Consulting/StaticWGen/issues/142)) ([5c7632f](https://github.com/Atypical-Consulting/StaticWGen/commit/5c7632f0e3e32d080f4e1b22661e3daa719a7d93))
+
+
+### Changed
+
+* deploy GitHub Pages from dev ([#145](https://github.com/Atypical-Consulting/StaticWGen/issues/145)) ([128b631](https://github.com/Atypical-Consulting/StaticWGen/commit/128b631632b19a7515a31c946736d5e47e7fcb81))
+* make themes/default the default theme and drop template/ ([#144](https://github.com/Atypical-Consulting/StaticWGen/issues/144)) ([a3e8272](https://github.com/Atypical-Consulting/StaticWGen/commit/a3e827285e1d29300fbe7acd317bff03a9b382ef))
+
 ## 0.1.0 (2026-11-24)
 
 
