@@ -163,7 +163,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
         .DependsOn<IClean>(x => x.Clean)
         .Executes(() =>
         {
-            var templateScripts = TemplateDirectory / "js";
+            var templateScripts = ThemePath("js");
             var outputScripts = OutputDirectory / "js";
             CopyDirectory(templateScripts, outputScripts, "Scripts");
         });
@@ -172,7 +172,7 @@ public interface IGenerateWebsite : IHasWebsitePaths
         .DependsOn<IClean>(x => x.Clean)
         .Executes(() =>
         {
-            var templateCss = TemplateDirectory / "css";
+            var templateCss = ThemePath("css");
             var outputCss = OutputDirectory / "css";
             CopyDirectory(templateCss, outputCss, "CSS");
         });

@@ -300,8 +300,8 @@ public interface IWatch : IHasWebsitePaths
 
     private void CopyTemplateAssets()
     {
-        var sourceJs = TemplateDirectory / "js";
-        var sourceCss = TemplateDirectory / "css";
+        var sourceJs = ThemePath("js");
+        var sourceCss = ThemePath("css");
         var outputJs = OutputDirectory / "js";
         var outputCss = OutputDirectory / "css";
 

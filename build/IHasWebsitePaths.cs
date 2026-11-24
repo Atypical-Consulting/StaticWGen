@@ -38,4 +38,11 @@ public interface IHasWebsitePaths : INukeBuild
     AbsolutePath OutputDirectory => RootDirectory / "output";
 
     AbsolutePath TemplateDirectory => RootDirectory / "themes" / Theme;
+
+    /// <summary>A theme inherits any file or folder it does not ship (js/, css/, robots.txt) from themes/default.</summary>
+    AbsolutePath ThemePath(string relative)
+    {
+        var own = TemplateDirectory / relative;
+        return File.Exists(own) || Directory.Exists(own) ? own : RootDirectory / "themes" / "default" / relative;
+    }
 }

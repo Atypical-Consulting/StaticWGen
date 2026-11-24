@@ -25,12 +25,18 @@ jobs:
       - name: Run tests
         run: dotnet test --project tests/StaticWGen.Tests/StaticWGen.Tests.csproj --verbosity normal
 
-      - name: Build website
+      # Every theme must build and pass Validate (links, a11y, SEO). default goes last so
+      # output/ holds the default theme for the checks, the image smoke test and the artifact.
+      - name: Build every theme
         run: |
           chmod +x build.sh
-          ./build.sh BuildWebsite \
-            --site-base-url "https://atypical-consulting.github.io/StaticWGen" \
-            --site-title "StaticWGen"
+          for theme in $(ls themes | grep -vx default) default; do
+            echo "::group::theme $theme"
+            ./build.sh BuildWebsite --theme "$theme" \
+              --site-base-url "https://atypical-consulting.github.io/StaticWGen" \
+              --site-title "StaticWGen"
+            echo "::endgroup::"
+          done
 
       - name: Verify generated output
         run: |
