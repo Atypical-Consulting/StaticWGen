@@ -6,34 +6,33 @@ using Nuke.Common.IO;
 using Scriban;
 using static Serilog.Log;
 
-public interface IGenerateTagPages : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
-    Target GenerateTagPages => _ => _
-        .DependsOn<IGenerateWebsite>(x => x.GenerateHtml)
-        .TriggeredBy<IGenerateWebsite>(x => x.GenerateHtml)
-        .Executes(() =>
+    public void GenerateTagPages()
+    {
+        Information("Generating tag pages...");
+
+        var tagMap = CollectTags();
+
+        if (tagMap.Count == 0)
         {
-            Information("Generating tag pages...");
+            Warning("No tags found. Skipping tag page generation.");
+            return;
+        }
 
-            var tagMap = CollectTags();
+        var templateContent = (TemplateDirectory / "template.html").ReadAllText();
+        var menu = BuildMenu();
 
-            if (tagMap.Count == 0)
-            {
-                Warning("No tags found. Skipping tag page generation.");
-                return;
-            }
+        var tagsDir = OutputDirectory / "tags";
+        tagsDir.CreateDirectory();
 
-            var templateContent = (TemplateDirectory / "template.html").ReadAllText();
-            var menu = BuildMenu();
+        GenerateTagIndex(tagMap, templateContent, menu);
+        GenerateIndividualTagPages(tagMap, templateContent, menu);
 
-            var tagsDir = OutputDirectory / "tags";
-            tagsDir.CreateDirectory();
-
-            GenerateTagIndex(tagMap, templateContent, menu);
-            GenerateIndividualTagPages(tagMap, templateContent, menu);
-
-            Information("Tag pages generated: {Count} tags", tagMap.Count);
-        });
+        Information("Tag pages generated: {Count} tags", tagMap.Count);
+    }
 
     private Dictionary<string, List<TaggedPage>> CollectTags()
     {

@@ -14,94 +14,91 @@ using Nuke.Common.IO;
 using Scriban;
 using static Serilog.Log;
 
-public interface IWatch : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
-    [Parameter("Port for the development server")]
-    int Port => TryGetValue<int?>(() => Port) ?? 3000;
+    public void Watch()
+    {
+        Information("Starting watch mode...");
 
-    Target Watch => _ => _
-        .DependsOn<IGenerateWebsite>(x => x.BuildWebsite)
-        .Executes(() =>
+        // Inject live-reload script into all HTML files
+        InjectLiveReloadScript();
+
+        // Start HTTP server in background
+        var httpThread = new Thread(() => StartHttpServer());
+        httpThread.IsBackground = true;
+        httpThread.Start();
+
+        Information("Serving at http://localhost:{Port}", Port);
+        Information("Watching input/ and {Theme} for changes...", TemplateDirectory);
+        Information("Press Ctrl+C to stop.");
+
+        // Track last rebuild to debounce
+        var lastRebuild = DateTime.MinValue;
+        var debounceMs = 300;
+
+        // Watch input directory
+        using var inputWatcher = new FileSystemWatcher(InputDirectory)
         {
-            Information("Starting watch mode...");
+            IncludeSubdirectories = true,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
+            EnableRaisingEvents = true
+        };
 
-            // Inject live-reload script into all HTML files
-            InjectLiveReloadScript();
+        // Watch template directory
+        using var templateWatcher = new FileSystemWatcher(TemplateDirectory)
+        {
+            IncludeSubdirectories = true,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
+            EnableRaisingEvents = true
+        };
 
-            // Start HTTP server in background
-            var httpThread = new Thread(() => StartHttpServer());
-            httpThread.IsBackground = true;
-            httpThread.Start();
+        var rebuildLock = new object();
 
-            Information("Serving at http://localhost:{Port}", Port);
-            Information("Watching input/ and {Theme} for changes...", TemplateDirectory);
-            Information("Press Ctrl+C to stop.");
-
-            // Track last rebuild to debounce
-            var lastRebuild = DateTime.MinValue;
-            var debounceMs = 300;
-
-            // Watch input directory
-            using var inputWatcher = new FileSystemWatcher(InputDirectory)
+        void OnChange(object sender, FileSystemEventArgs e)
+        {
+            lock (rebuildLock)
             {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
-                EnableRaisingEvents = true
-            };
-
-            // Watch template directory
-            using var templateWatcher = new FileSystemWatcher(TemplateDirectory)
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.CreationTime,
-                EnableRaisingEvents = true
-            };
-
-            var rebuildLock = new object();
-
-            void OnChange(object sender, FileSystemEventArgs e)
-            {
-                lock (rebuildLock)
-                {
-                    if ((DateTime.Now - lastRebuild).TotalMilliseconds < debounceMs)
-                        return;
-                    lastRebuild = DateTime.Now;
-                }
-
-                var isTemplate = e.FullPath.StartsWith(TemplateDirectory);
-                var fileName = Path.GetFileName(e.FullPath);
-
-                if (isTemplate)
-                {
-                    Information("[{Time:HH:mm:ss}] Template changed: {File} — full rebuild",
-                        DateTime.Now, fileName);
-                    FullRebuild();
-                }
-                else if (e.FullPath.EndsWith(".md"))
-                {
-                    Information("[{Time:HH:mm:ss}] Content changed: {File} — rebuilding",
-                        DateTime.Now, fileName);
-                    RebuildSingleFile((AbsolutePath)e.FullPath);
-                }
+                if ((DateTime.Now - lastRebuild).TotalMilliseconds < debounceMs)
+                    return;
+                lastRebuild = DateTime.Now;
             }
 
-            inputWatcher.Changed += OnChange;
-            inputWatcher.Created += OnChange;
-            inputWatcher.Deleted += (s, e) => { OnChange(s, e); };
-            templateWatcher.Changed += OnChange;
-            templateWatcher.Created += OnChange;
+            var isTemplate = e.FullPath.StartsWith(TemplateDirectory);
+            var fileName = Path.GetFileName(e.FullPath);
 
-            // Block forever (until Ctrl+C)
-            using var resetEvent = new ManualResetEvent(false);
-            Console.CancelKeyPress += (s, e) =>
+            if (isTemplate)
             {
-                e.Cancel = true;
-                resetEvent.Set();
-            };
-            resetEvent.WaitOne();
+                Information("[{Time:HH:mm:ss}] Template changed: {File} — full rebuild",
+                    DateTime.Now, fileName);
+                FullRebuild();
+            }
+            else if (e.FullPath.EndsWith(".md"))
+            {
+                Information("[{Time:HH:mm:ss}] Content changed: {File} — rebuilding",
+                    DateTime.Now, fileName);
+                RebuildSingleFile((AbsolutePath)e.FullPath);
+            }
+        }
 
-            Information("Watch mode stopped.");
-        });
+        inputWatcher.Changed += OnChange;
+        inputWatcher.Created += OnChange;
+        inputWatcher.Deleted += (s, e) => { OnChange(s, e); };
+        templateWatcher.Changed += OnChange;
+        templateWatcher.Created += OnChange;
+
+        // Block forever (until Ctrl+C)
+        using var resetEvent = new ManualResetEvent(false);
+        Console.CancelKeyPress += (s, e) =>
+        {
+            e.Cancel = true;
+            resetEvent.Set();
+        };
+        resetEvent.WaitOne();
+
+        Information("Watch mode stopped.");
+    }
 
     private void FullRebuild()
     {

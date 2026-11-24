@@ -9,36 +9,27 @@ using Nuke.Common.IO;
 using WebMarkupMin.Core;
 using static Serilog.Log;
 
-public interface IOptimizeOutput : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
-    [Parameter("Enable HTML minification")]
-    bool MinifyHtml => TryGetValue<bool?>(() => MinifyHtml) ?? true;
+    public void OptimizeOutput()
+    {
+        Information("Optimizing output...");
 
-    [Parameter("Enable asset fingerprinting with content hash")]
-    bool FingerprintAssets => TryGetValue<bool?>(() => FingerprintAssets) ?? true;
+        var assetMap = new Dictionary<string, string>();
 
-    Target OptimizeOutput => _ => _
-        .DependsOn<IGenerateWebsite>(x => x.BuildWebsite)
-        .TriggeredBy<IGenerateWebsite>(x => x.BuildWebsite)
-        .Before<IValidateOutput>(x => x.Validate)
-        .Before<ICompressOutput>(x => x.CompressOutput)
-        .Executes(() =>
-        {
-            Information("Optimizing output...");
+        if (FingerprintAssets)
+            assetMap = FingerprintStaticAssets();
 
-            var assetMap = new Dictionary<string, string>();
+        if (MinifyHtml)
+            MinifyHtmlFiles(assetMap);
+        else if (assetMap.Count > 0)
+            UpdateAssetReferences(assetMap);
 
-            if (FingerprintAssets)
-                assetMap = FingerprintStaticAssets();
-
-            if (MinifyHtml)
-                MinifyHtmlFiles(assetMap);
-            else if (assetMap.Count > 0)
-                UpdateAssetReferences(assetMap);
-
-            if (assetMap.Count > 0)
-                Information("Fingerprinted {Count} assets", assetMap.Count);
-        });
+        if (assetMap.Count > 0)
+            Information("Fingerprinted {Count} assets", assetMap.Count);
+    }
 
     private Dictionary<string, string> FingerprintStaticAssets()
     {
@@ -150,10 +141,4 @@ public interface IOptimizeOutput : IHasWebsitePaths
         }
     }
 
-    private static string FormatBytes(long bytes)
-    {
-        if (bytes < 1024) return $"{bytes} B";
-        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
-        return $"{bytes / (1024.0 * 1024.0):F1} MB";
-    }
 }

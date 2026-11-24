@@ -15,14 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="HtmlAgilityPack" Version="1.13.1" />
-    <PackageReference Include="SkiaSharp" Version="4.157.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
-    <PackageReference Include="WebMarkupMin.Core" Version="2.24.2" />
-    <PackageReference Include="Markdig" Version="1.6.0" />
     <PackageReference Include="Nuke.Common" Version="10.1.0" />
-    <PackageReference Include="Scriban" Version="7.6.1" />
-    <PackageReference Include="WebStoating.Markdig.Prism" Version="1.0.0" />
     <!-- Pin vulnerable transitive deps pulled by Nuke.Common -->
     <PackageReference Include="NuGet.Packaging" Version="8.0.0" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
@@ -31,12 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\StaticWGen.Core\StaticWGen.Core.csproj" />
-    <Using Include="StaticWGen.Core.Models" />
-    <Using Include="StaticWGen.Core.Services" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ci\" />
+    <Using Include="StaticWGen.Core" />
   </ItemGroup>
 
 </Project>

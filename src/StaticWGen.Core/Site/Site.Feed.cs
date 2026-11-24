@@ -6,40 +6,30 @@ using Nuke.Common;
 using Nuke.Common.IO;
 using static Serilog.Log;
 
-public interface IGenerateFeed : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
-    [Parameter("Title for the Atom feed (defaults to SiteTitle)")]
-    string FeedTitle => TryGetValue(() => FeedTitle) ?? SiteTitle;
+    public void GenerateFeed()
+    {
+        Information("Generating Atom feed...");
 
-    [Parameter("Description for the Atom feed")]
-    string FeedDescription => TryGetValue(() => FeedDescription) ?? "";
+        var baseUrl = SiteBaseUrl.TrimEnd('/');
+        var entries = CollectFeedEntries(baseUrl);
 
-    [Parameter("Author name for the Atom feed")]
-    string FeedAuthor => TryGetValue(() => FeedAuthor) ?? "";
-
-    Target GenerateFeed => _ => _
-        .DependsOn<IGenerateWebsite>(x => x.GenerateHtml)
-        .TriggeredBy<IGenerateWebsite>(x => x.GenerateHtml)
-        .Executes(() =>
+        if (entries.Count == 0)
         {
-            Information("Generating Atom feed...");
+            Warning("No pages with date metadata found. Skipping feed generation.");
+            return;
+        }
 
-            var baseUrl = SiteBaseUrl.TrimEnd('/');
-            var entries = CollectFeedEntries(baseUrl);
+        var feedXml = BuildAtomFeed(baseUrl, entries);
 
-            if (entries.Count == 0)
-            {
-                Warning("No pages with date metadata found. Skipping feed generation.");
-                return;
-            }
+        var feedPath = OutputDirectory / "feed.xml";
+        feedXml.Save(feedPath);
 
-            var feedXml = BuildAtomFeed(baseUrl, entries);
-
-            var feedPath = OutputDirectory / "feed.xml";
-            feedXml.Save(feedPath);
-
-            Information("feed.xml generated at {FeedPath} with {Count} entries", feedPath, entries.Count);
-        });
+        Information("feed.xml generated at {FeedPath} with {Count} entries", feedPath, entries.Count);
+    }
 
     private List<FeedEntry> CollectFeedEntries(string baseUrl)
     {

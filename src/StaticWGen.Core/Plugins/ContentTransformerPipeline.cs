@@ -4,9 +4,11 @@ using System.Linq;
 using System.Reflection;
 using static Serilog.Log;
 
+namespace StaticWGen.Core;
+
 /// <summary>
 /// Discovers and runs content transformers in order.
-/// Scans the current assembly for classes implementing IContentTransformer.
+/// Scans StaticWGen.Core and the entry assembly for classes implementing IContentTransformer.
 /// </summary>
 public static class ContentTransformerPipeline
 {
@@ -19,8 +21,11 @@ public static class ContentTransformerPipeline
             if (_transformers != null)
                 return _transformers;
 
-            _transformers = Assembly.GetExecutingAssembly()
-                .GetTypes()
+            // Built-ins live in Core; custom transformers live in the host (the Nuke build or a CLI).
+            _transformers = new[] { typeof(IContentTransformer).Assembly, Assembly.GetEntryAssembly() }
+                .OfType<Assembly>()
+                .Distinct()
+                .SelectMany(a => a.GetTypes())
                 .Where(t => typeof(IContentTransformer).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
                 .Select(t => (IContentTransformer)Activator.CreateInstance(t)!)
                 .OrderBy(t => t.Order)

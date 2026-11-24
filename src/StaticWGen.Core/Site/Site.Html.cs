@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Extensions.Yaml;
-using Markdig.Prism;
 using Markdig.Renderers;
 using Markdig.Renderers.Html;
 using Markdig.Syntax;
@@ -16,179 +15,142 @@ using Scriban;
 using YamlDotNet.RepresentationModel;
 using static Serilog.Log;
 
-public interface IGenerateWebsite : IHasWebsitePaths
+namespace StaticWGen.Core;
+
+public partial class Site
 {
-    [Parameter("Default image URL for social sharing")]
-    string DefaultImageUrl => TryGetValue(() => DefaultImageUrl) ?? "";
-    
-    [Parameter("Analytics provider: plausible, google, custom, or empty to disable")]
-    string AnalyticsProvider => TryGetValue(() => AnalyticsProvider) ?? "";
+    public void GenerateHtml()
+    {
+        Information("Generating HTML files from Markdown...");
 
-    [Parameter("Analytics site ID (domain for Plausible, measurement ID for GA4)")]
-    string AnalyticsSiteId => TryGetValue(() => AnalyticsSiteId) ?? "";
+        var template = TemplateDirectory / "template.html";
+        var templateContent = template.ReadAllText();
 
-    [Parameter("Custom analytics script URL")]
-    string AnalyticsScriptUrl => TryGetValue(() => AnalyticsScriptUrl) ?? "";
+        // Step 1: Get all Markdown files and filter by content status
+        var markdownFiles = InputDirectory.GlobFiles("**/*.md");
+        var publishableFiles = new List<AbsolutePath>();
+        var draftCount = 0;
+        var scheduledCount = 0;
+        var archivedCount = 0;
 
-    [Parameter("Include draft pages in output")]
-    bool IncludeDrafts => TryGetValue<bool?>(() => IncludeDrafts) ?? false;
-
-    [Parameter("Continue processing remaining files when one fails")]
-    bool ContinueOnError => TryGetValue<bool?>(() => ContinueOnError) ?? false;
-
-    Target GenerateHtml => _ => _
-        .DependsOn<IClean>(x => x.Clean)
-        .Executes(() =>
+        foreach (var file in markdownFiles)
         {
-            Information("Generating HTML files from Markdown...");
+            var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
+            var status = MarkdownService.GetContentStatus(metadata, IncludeDrafts);
 
-            var template = TemplateDirectory / "template.html";
-            var templateContent = template.ReadAllText();
-
-            // Step 1: Get all Markdown files and filter by content status
-            var markdownFiles = InputDirectory.GlobFiles("**/*.md");
-            var publishableFiles = new List<AbsolutePath>();
-            var draftCount = 0;
-            var scheduledCount = 0;
-            var archivedCount = 0;
-
-            foreach (var file in markdownFiles)
+            switch (status)
             {
-                var (metadata, _) = MarkdownService.ParseMarkdownFile(file);
-                var status = MarkdownService.GetContentStatus(metadata, IncludeDrafts);
-
-                switch (status)
-                {
-                    case ContentStatus.Excluded:
-                        if (metadata.TryGetValue("draft", out var isDraft) &&
-                            string.Equals(isDraft, "true", StringComparison.OrdinalIgnoreCase))
-                        {
-                            draftCount++;
-                            Information("Skipping draft: {File}", file.Name);
-                        }
-                        else if (metadata.TryGetValue("publishDate", out var pubDate))
-                        {
-                            scheduledCount++;
-                            Information("Skipping scheduled post: {File} (publishes {Date})", file.Name, pubDate);
-                        }
-                        continue;
-                    case ContentStatus.Draft:
+                case ContentStatus.Excluded:
+                    if (metadata.TryGetValue("draft", out var isDraft) &&
+                        string.Equals(isDraft, "true", StringComparison.OrdinalIgnoreCase))
+                    {
                         draftCount++;
-                        Information("Including draft (--include-drafts): {File}", file.Name);
-                        break;
-                    case ContentStatus.Scheduled:
+                        Information("Skipping draft: {File}", file.Name);
+                    }
+                    else if (metadata.TryGetValue("publishDate", out var pubDate))
+                    {
                         scheduledCount++;
-                        Information("Including scheduled post (--include-drafts): {File}", file.Name);
-                        break;
-                    case ContentStatus.Archived:
-                        archivedCount++;
-                        break;
-                }
-
-                publishableFiles.Add(file);
+                        Information("Skipping scheduled post: {File} (publishes {Date})", file.Name, pubDate);
+                    }
+                    continue;
+                case ContentStatus.Draft:
+                    draftCount++;
+                    Information("Including draft (--include-drafts): {File}", file.Name);
+                    break;
+                case ContentStatus.Scheduled:
+                    scheduledCount++;
+                    Information("Including scheduled post (--include-drafts): {File}", file.Name);
+                    break;
+                case ContentStatus.Archived:
+                    archivedCount++;
+                    break;
             }
 
-            // Step 2: Generate menu from publishable, non-archived files
-            var menuFiles = publishableFiles
-                .Where(f =>
-                {
-                    var (m, _) = MarkdownService.ParseMarkdownFile(f);
-                    return MarkdownService.GetContentStatus(m) != ContentStatus.Archived;
-                })
-                .ToList();
-            var menu = GenerateMenu(menuFiles);
+            publishableFiles.Add(file);
+        }
 
-            // Step 3: Generate HTML for each publishable file with error tracking
-            var successCount = 0;
-            var errorCount = 0;
-            var errors = new List<string>();
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-            foreach (var file in publishableFiles)
+        // Step 2: Generate menu from publishable, non-archived files
+        var menuFiles = publishableFiles
+            .Where(f =>
             {
-                try
-                {
-                    ProcessMarkdownFile(file, templateContent, menu);
-                    successCount++;
-                }
-                catch (Exception ex)
-                {
-                    errorCount++;
-                    var errorMsg = $"{file.Name}: {ex.Message}";
-                    errors.Add(errorMsg);
-                    Error("Error processing {File}: {Message}", file.Name, ex.Message);
+                var (m, _) = MarkdownService.ParseMarkdownFile(f);
+                return MarkdownService.GetContentStatus(m) != ContentStatus.Archived;
+            })
+            .ToList();
+        var menu = GenerateMenu(menuFiles);
 
-                    if (!ContinueOnError)
-                        throw;
-                }
-            }
+        // Step 3: Generate HTML for each publishable file with error tracking
+        var successCount = 0;
+        var errorCount = 0;
+        var errors = new List<string>();
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            stopwatch.Stop();
-
-            // Build Summary
-            Information("═══════════════════════════════════════");
-            Information("  Build Summary");
-            Information("═══════════════════════════════════════");
-            Information("  Processed: {Count} pages ({Time:F1}s)", successCount, stopwatch.Elapsed.TotalSeconds);
-            if (draftCount > 0)
-                Information("  Drafts:    {Count} pages {Status}", draftCount,
-                    IncludeDrafts ? "(included)" : "(skipped)");
-            if (scheduledCount > 0)
-                Information("  Scheduled: {Count} pages {Status}", scheduledCount,
-                    IncludeDrafts ? "(included)" : "(skipped)");
-            if (archivedCount > 0)
-                Information("  Archived:  {Count} pages", archivedCount);
-            if (errorCount > 0)
+        foreach (var file in publishableFiles)
+        {
+            try
             {
-                Error("  Errors:    {Count}", errorCount);
-                foreach (var err in errors)
-                    Error("    - {Error}", err);
+                ProcessMarkdownFile(file, templateContent, menu);
+                successCount++;
             }
-            Information("═══════════════════════════════════════");
+            catch (Exception ex)
+            {
+                errorCount++;
+                var errorMsg = $"{file.Name}: {ex.Message}";
+                errors.Add(errorMsg);
+                Error("Error processing {File}: {Message}", file.Name, ex.Message);
 
-            if (errorCount > 0 && ContinueOnError)
-                Assert.Fail($"Build completed with {errorCount} error(s). See summary above.");
-        });
+                if (!ContinueOnError)
+                    throw;
+            }
+        }
 
-    Target CopyAssets => _ => _
-        .DependsOn<IClean>(x => x.Clean)
-        .Executes(() =>
+        stopwatch.Stop();
+
+        // Build Summary
+        Information("═══════════════════════════════════════");
+        Information("  Build Summary");
+        Information("═══════════════════════════════════════");
+        Information("  Processed: {Count} pages ({Time:F1}s)", successCount, stopwatch.Elapsed.TotalSeconds);
+        if (draftCount > 0)
+            Information("  Drafts:    {Count} pages {Status}", draftCount,
+                IncludeDrafts ? "(included)" : "(skipped)");
+        if (scheduledCount > 0)
+            Information("  Scheduled: {Count} pages {Status}", scheduledCount,
+                IncludeDrafts ? "(included)" : "(skipped)");
+        if (archivedCount > 0)
+            Information("  Archived:  {Count} pages", archivedCount);
+        if (errorCount > 0)
         {
-            var inputAssets = InputDirectory / "assets";
-            var outputAssets = OutputDirectory / "assets";
-            CopyDirectory(inputAssets, outputAssets, "Assets");
-        });
+            Error("  Errors:    {Count}", errorCount);
+            foreach (var err in errors)
+                Error("    - {Error}", err);
+        }
+        Information("═══════════════════════════════════════");
+
+        if (errorCount > 0 && ContinueOnError)
+            Assert.Fail($"Build completed with {errorCount} error(s). See summary above.");
+    }
+
+    public void CopyAssets()
+    {
+        var inputAssets = InputDirectory / "assets";
+        var outputAssets = OutputDirectory / "assets";
+        CopyDirectory(inputAssets, outputAssets, "Assets");
+    }
     
-    Target CopyJsScripts => _ => _
-        .DependsOn<IClean>(x => x.Clean)
-        .Executes(() =>
-        {
-            var templateScripts = ThemePath("js");
-            var outputScripts = OutputDirectory / "js";
-            CopyDirectory(templateScripts, outputScripts, "Scripts");
-        });
+    public void CopyJsScripts()
+    {
+        var templateScripts = ThemePath("js");
+        var outputScripts = OutputDirectory / "js";
+        CopyDirectory(templateScripts, outputScripts, "Scripts");
+    }
     
-    Target CopyCss => _ => _
-        .DependsOn<IClean>(x => x.Clean)
-        .Executes(() =>
-        {
-            var templateCss = ThemePath("css");
-            var outputCss = OutputDirectory / "css";
-            CopyDirectory(templateCss, outputCss, "CSS");
-        });
-    
-    Target BuildWebsite => _ => _
-        .DependsOn(CopyAssets, CopyJsScripts, CopyCss)
-        .DependsOn<ISitemap>(x => x.GenerateSitemap)
-        .DependsOn<IRobotsTxt>(x => x.GenerateRobotsTxt)
-        .DependsOn<IGenerateFeed>(x => x.GenerateFeed)
-        .DependsOn<IGenerateTagPages>(x => x.GenerateTagPages)
-        .DependsOn<IGenerateBlogIndex>(x => x.GenerateBlogIndex)
-        .Executes(() =>
-        {
-            // Add more logic if necessary, like bundling, minifying, etc.
-            Information("Static website built successfully!");
-        });
+    public void CopyCss()
+    {
+        var templateCss = ThemePath("css");
+        var outputCss = OutputDirectory / "css";
+        CopyDirectory(templateCss, outputCss, "CSS");
+    }
     
     private static List<MenuItem> GenerateMenu(IReadOnlyCollection<AbsolutePath> markdownFiles)
     {

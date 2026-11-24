@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 
+namespace StaticWGen.Core;
+
 /// <summary>
 /// Interface for content transformers that process HTML after Markdown conversion.
 /// Transformers are applied in Order sequence (lower = earlier).

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+namespace StaticWGen.Core;
+
 /// <summary>
 /// Transforms {{youtube:VIDEO_ID}} shortcodes into responsive YouTube embeds.
 /// Usage in markdown: {{youtube:dQw4w9WgXcQ}}

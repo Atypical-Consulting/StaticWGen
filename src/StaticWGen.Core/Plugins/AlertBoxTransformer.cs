@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
+namespace StaticWGen.Core;
+
 /// <summary>
 /// Transforms {{alert:type}}...{{/alert}} shortcodes into styled alert boxes.
 /// Supported types: info, warning, danger, success.
