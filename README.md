@@ -13,6 +13,7 @@
 - [Content Authoring Guide](#content-authoring-guide)
 - [Build Targets Reference](#build-targets-reference)
 - [Template Customization](#template-customization)
+- [Content Transformers](#content-transformers)
 - [Docker Deployment](#docker-deployment)
 - [Tech Stack](#tech-stack)
 - [Roadmap](#roadmap)
@@ -421,6 +422,43 @@ A theme only has to ship `template.html`: any `js/`, `css/` or `robots.txt` it d
 - `themes/default/js/` — JavaScript files (theme switcher, Prism.js, modal)
 - `themes/default/css/` — CSS files (Prism.js theme)
 
+## Content Transformers
+
+Content transformers post-process each page's HTML after Markdown rendering and before the theme template is applied. They power shortcodes that plain Markdown can't express.
+
+### Built-in shortcodes
+
+| Shortcode | Transformer | Output |
+|---|---|---|
+| `{{youtube:VIDEO_ID}}` | `YouTubeEmbedTransformer` (order 10) | Responsive privacy-enhanced (`youtube-nocookie.com`) embed |
+| `{{alert:info\|warning\|danger\|success}}text{{/alert}}` | `AlertBoxTransformer` (order 20) | Styled `role="alert"` box |
+
+### Writing your own
+
+Add a class implementing `IContentTransformer` anywhere under `build/`. It is discovered by reflection at build time, so there is nothing to register:
+
+```csharp
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+/// {{kbd:Ctrl+C}} -> <kbd>Ctrl</kbd>+<kbd>C</kbd>
+public class KbdTransformer : IContentTransformer
+{
+    public int Order => 30;            // lower runs first
+    public string Name => "Keyboard";  // shown in the build log
+
+    public string Transform(string html, Dictionary<string, string> metadata) =>
+        Regex.Replace(html, @"\{\{kbd:([^}]+)\}\}", m =>
+            string.Join("+", m.Groups[1].Value.Split('+').Select(k => $"<kbd>{k}</kbd>")));
+}
+```
+
+- `html` is the rendered page body; `metadata` is the page's front-matter (keys are case-insensitive), so a transformer can opt pages in or out (e.g. `metadata.GetValueOrDefault("math") == "true"`).
+- Transformers run in ascending `Order`; the build log lists them as `[order] Name` at startup.
+- Markdown wraps a shortcode that sits alone on a line in `<p>…</p>`: match the optional wrapper (`(?:<p>)?…(?:</p>)?`) as the built-ins do, or a block element ends up inside a paragraph.
+- The output is not sanitised: only transform content you control. If your transformer embeds a third-party host (iframe, script), add it to the CSP in `nginx-security-headers.conf`.
+
 ## Docker Deployment
 
 StaticWGen uses a lightweight nginx Alpine image to serve the generated static files.
@@ -466,7 +504,6 @@ docker run -d -p 8080:80 --name my-site my-site
 
 ## Roadmap
 
-- [ ] Expand the `ContentTransformerPipeline` plugin system beyond the built-in `AlertBoxTransformer` and `YouTubeEmbedTransformer`, and document how to author custom transformers
 - [ ] Package the NUKE build automation as a reusable component so other projects can adopt the generator without cloning the whole repo
 
 See the [open issues](https://github.com/Atypical-Consulting/StaticWGen/issues) for more.
