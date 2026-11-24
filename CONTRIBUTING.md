@@ -34,14 +34,13 @@ This starts a live-reload server on http://localhost:3000.
 ## Submitting Changes
 
 1. Ensure the build passes locally
-2. Write clear, concise commit messages
+2. Title your PR as a [Conventional Commit](https://www.conventionalcommits.org) (`feat:`, `fix:`, `docs:`, …) — it becomes the squash commit that release-please reads to version and write CHANGELOG.md
 3. Push your branch and open a pull request against `dev`
 4. Fill out the PR template
 
 ## Branch Strategy
 
-- `main` — stable releases
-- `dev` — active development (target your PRs here)
+- `dev` — active development and releases: target your PRs here; release-please keeps a release PR open and merging it tags `vX.Y.Z`
 
 ## Code Style
 

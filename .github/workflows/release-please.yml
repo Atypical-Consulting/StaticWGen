@@ -1,0 +1,96 @@
+name: release-please
+
+# Conventional-Commits-driven releases. On every push to `dev`, release-please keeps a release PR
+# up to date (CHANGELOG.md + .release-please-manifest.json). Merging it tags vX.Y.Z and creates the
+# GitHub Release; `release_created` then gates the publish job in THIS run.
+#
+# Publishing lives here, not in a tag-triggered workflow: release-please tags with GITHUB_TOKEN,
+# and GitHub does not fire `on: push: tags` for events created by that token.
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  # release-please finds a merged release PR solely by the `autorelease: pending` label, which it
+  # must be able to create (an Issues-scoped endpoint). Without it nothing is ever tagged.
+  issues: write
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+        id: release
+        with:
+          target-branch: dev
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  publish:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Job-level permissions REPLACE the workflow-level block, so restate every scope needed.
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '11.0.x'
+
+      - name: Build website
+        run: |
+          chmod +x build.sh
+          ./build.sh BuildWebsite \
+            --site-base-url "https://atypical-consulting.github.io/StaticWGen" \
+            --site-title "StaticWGen"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # `type=semver` needs a tag ref, and this is a branch push: take the version from release-please.
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ needs.release-please.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # release-please already created the Release with CHANGELOG notes; only attach the site.
+      - name: Attach site.zip to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" site.zip --clobber
