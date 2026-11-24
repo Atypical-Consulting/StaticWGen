@@ -113,7 +113,7 @@ The generated site is in the `output/` directory.
   --site-title "My Site"
 ```
 
-Open http://localhost:3000 in your browser. Changes to `input/` and `template/` are automatically rebuilt with live reload.
+Open http://localhost:3000 in your browser. Changes to `input/` and the active theme are automatically rebuilt with live reload.
 
 ### 4. Serve statically (alternative)
 
@@ -144,7 +144,7 @@ All parameters can be set via command-line flags, `.nuke/parameters.json`, `.env
 |-----------|----------|---------|-------------|
 | `SiteTitle` | Yes | — | Title displayed in header, footer, and meta tags |
 | `SiteBaseUrl` | Yes | — | Base URL for absolute links, sitemap, and feed |
-| `Theme` | No | `""` | Theme name (looks in `themes/{name}/`, falls back to `template/`) |
+| `Theme` | No | `default` | Theme name (directory under `themes/`; the build fails if it does not exist) |
 | `DefaultImageUrl` | No | `""` | Fallback Open Graph image URL |
 | `IncludeDrafts` | No | `false` | Include draft and scheduled pages in output |
 | `ContinueOnError` | No | `false` | Continue processing remaining files when one fails |
@@ -336,8 +336,8 @@ Place images and other assets in `input/assets/`. They are copied to `output/ass
 | `GenerateFeed` | GenerateHtml | Generates Atom `feed.xml` from dated content |
 | `GenerateSearchIndex` | GenerateHtml | Generates `search-index.json` for client-side search |
 | `CopyAssets` | Clean | Copies `input/assets/` to `output/assets/` |
-| `CopyJsScripts` | Clean | Copies `template/js/` to `output/js/` |
-| `CopyCss` | Clean | Copies `template/css/` to `output/css/` |
+| `CopyJsScripts` | Clean | Copies `themes/{Theme}/js/` to `output/js/` |
+| `CopyCss` | Clean | Copies `themes/{Theme}/css/` to `output/css/` |
 | `BuildWebsite` | All above | Orchestrates the full site generation |
 | `OptimizeImages` | CopyAssets | Resizes images, generates WebP, adds lazy loading |
 | `OptimizeOutput` | BuildWebsite | Minifies HTML and fingerprints CSS/JS assets |
@@ -359,7 +359,7 @@ Run any target with:
 
 ## Template Customization
 
-The HTML template uses [Scriban](https://github.com/scriban/scriban) syntax. The active template is resolved from `themes/{Theme}/template.html` if a theme is set, otherwise `template/template.html`.
+The HTML template uses [Scriban](https://github.com/scriban/scriban) syntax. The active template is `themes/{Theme}/template.html` (`default` unless `--theme` is set).
 
 ### Available template variables
 
@@ -405,13 +405,13 @@ themes/
     └── theme.yaml
 ```
 
-Select a theme with `--theme <name>`. If the theme directory doesn't exist, it falls back to `template/`.
+Select a theme with `--theme <name>`. The build fails if `themes/<name>/` doesn't exist.
 
-### Legacy template structure
+### Default theme files
 
-- `template/template.html` — Main HTML template
-- `template/js/` — JavaScript files (theme switcher, Prism.js, modal)
-- `template/css/` — CSS files (Prism.js theme)
+- `themes/default/template.html` — Main HTML template
+- `themes/default/js/` — JavaScript files (theme switcher, Prism.js, modal)
+- `themes/default/css/` — CSS files (Prism.js theme)
 
 ## Docker Deployment
 
@@ -458,7 +458,7 @@ docker run -d -p 8080:80 --name my-site my-site
 
 ## Roadmap
 
-- [ ] Ship a working client-side search UI that consumes the generated `search-index.json` — themes already declare `search` support in `theme.yaml`, but no template renders a search box yet
+- [ ] Add a search box to the `docs` theme (the `default` theme already renders one from `search-index.json`)
 - [ ] Flesh out the `docs` and `minimal` themes with their own `css/`/`js/` assets instead of only `themes/default` shipping dedicated styles and scripts
 - [ ] Expand the `ContentTransformerPipeline` plugin system beyond the built-in `AlertBoxTransformer` and `YouTubeEmbedTransformer`, and document how to author custom transformers
 - [ ] Package the NUKE build automation as a reusable component so other projects can adopt the generator without cloning the whole repo
@@ -501,7 +501,6 @@ StaticWGen/
 ├── input/              # Markdown source files
 │   ├── assets/         # Static assets (images, etc.)
 │   └── *.md            # Content pages
-├── template/           # Legacy HTML template and assets
 │   ├── template.html   # Scriban template
 │   ├── js/             # JavaScript files
 │   └── css/            # CSS files
