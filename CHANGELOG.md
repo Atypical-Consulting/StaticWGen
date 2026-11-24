@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/Atypical-Consulting/StaticWGen/compare/v0.1.1...v0.2.0) (2026-11-24)
+
+
+### Added
+
+* start a new site from the repository as a GitHub template ([#149](https://github.com/Atypical-Consulting/StaticWGen/issues/149)) ([2dea26d](https://github.com/Atypical-Consulting/StaticWGen/commit/2dea26d64e3a8eaf52895a9642bc455ddc9ad1be))
+* **themes:** make the docs and minimal themes production-ready ([#146](https://github.com/Atypical-Consulting/StaticWGen/issues/146)) ([7207418](https://github.com/Atypical-Consulting/StaticWGen/commit/720741809e80cc38a5183812e93fc5233b13c1f1))
+
+
+### Documentation
+
+* document content transformers and how to write one ([#148](https://github.com/Atypical-Consulting/StaticWGen/issues/148)) ([c88b686](https://github.com/Atypical-Consulting/StaticWGen/commit/c88b686f90ac7fbec5177bcb3bfa950738630428))
+
 ## [0.1.1](https://github.com/Atypical-Consulting/StaticWGen/compare/v0.1.0...v0.1.1) (2026-11-24)
 
 
