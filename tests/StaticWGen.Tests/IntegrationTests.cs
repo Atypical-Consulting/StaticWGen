@@ -39,12 +39,12 @@ public class IntegrationTests
             """;
 
         // Extract metadata
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(markdown);
+        var metadata = MarkdownService.ExtractMetadata(markdown);
         Assert.Equal("Integration Test", metadata["title"]);
 
         // Remove front matter and convert
-        var content = MarkdownPipelineHelper.RemoveFrontMatter(markdown);
-        var html = MarkdownPipelineHelper.ConvertToHtmlWithMermaidRenderer(content);
+        var content = MarkdownService.RemoveFrontMatter(markdown);
+        var html = MarkdownService.ConvertToHtml(content);
 
         // Render template
         var finalHtml = Template.Parse(template).Render(new
@@ -83,7 +83,7 @@ public class IntegrationTests
             ```
             """;
 
-        var html = MarkdownPipelineHelper.ConvertToHtmlWithMermaidRenderer(markdown);
+        var html = MarkdownService.ConvertToHtml(markdown);
 
         // Emoji
         Assert.Contains("👋", html);

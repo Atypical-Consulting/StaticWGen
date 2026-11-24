@@ -17,7 +17,7 @@ public class YamlFrontMatterTests
             # Hello
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Equal("My Page", metadata["title"]);
         Assert.Equal("A test page", metadata["description"]);
@@ -37,7 +37,7 @@ public class YamlFrontMatterTests
             # Content
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Single(metadata);
         Assert.Equal("Minimal Page", metadata["title"]);
@@ -50,7 +50,7 @@ public class YamlFrontMatterTests
     {
         var content = "# Just a heading\n\nSome content.";
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Empty(metadata);
     }
@@ -66,7 +66,7 @@ public class YamlFrontMatterTests
             # Content
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Equal("Case Test", metadata["title"]);
         Assert.Equal("Testing case", metadata["description"]);
@@ -84,7 +84,7 @@ public class YamlFrontMatterTests
             Content here.
             """;
 
-        var result = MarkdownPipelineHelper.RemoveFrontMatter(content);
+        var result = MarkdownService.RemoveFrontMatter(content);
 
         Assert.StartsWith("# Heading", result);
         Assert.DoesNotContain("---", result);
@@ -96,7 +96,7 @@ public class YamlFrontMatterTests
     {
         var content = "# Just content\n\nNo front matter here.";
 
-        var result = MarkdownPipelineHelper.RemoveFrontMatter(content);
+        var result = MarkdownService.RemoveFrontMatter(content);
 
         Assert.Equal(content, result);
     }
@@ -110,7 +110,7 @@ public class YamlFrontMatterTests
             # Content
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Empty(metadata);
     }
@@ -129,7 +129,7 @@ public class YamlFrontMatterTests
             # Content
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Equal("Test", metadata["title"]);
         Assert.Equal("csharp, algorithms, tutorial", metadata["tags"]);
@@ -146,7 +146,7 @@ public class YamlFrontMatterTests
             # Content
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Equal("a, b, c", metadata["tags"]);
     }
@@ -163,7 +163,7 @@ public class YamlFrontMatterTests
             # Content
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Equal("Test", metadata["title"]);
         Assert.False(metadata.ContainsKey("nested"));
@@ -180,9 +180,22 @@ public class YamlFrontMatterTests
             # Content
             """;
 
-        var metadata = MarkdownPipelineHelper.ExtractMetadata(content);
+        var metadata = MarkdownService.ExtractMetadata(content);
 
         Assert.Equal("Test", metadata["title"]);
         Assert.Equal("", metadata["description"]);
+    }
+
+    [Fact]
+    public void ExtractMetadata_ReportsInvalidDateAndMalformedYaml_ThroughCallback()
+    {
+        var warnings = new List<string>();
+
+        MarkdownService.ExtractMetadata("---\ntitle: Test\ndate: not-a-date\n---\nBody", "post.md", warnings.Add);
+        MarkdownService.ExtractMetadata("---\ntitle: [unclosed\n---\nBody", "bad.md", warnings.Add);
+
+        Assert.Collection(warnings,
+            w => Assert.Equal("Invalid date format 'not-a-date' in post.md — expected a parseable date (e.g., 2024-09-13)", w),
+            w => Assert.StartsWith("Malformed YAML front-matter in bad.md:", w));
     }
 }

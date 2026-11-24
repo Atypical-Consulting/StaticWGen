@@ -83,7 +83,7 @@ public interface ISitemap : IHasWebsitePaths
         var mdFile = InputDirectory / $"{fileName}.md";
         if (mdFile.FileExists())
         {
-            var (metadata, _) = MarkdownHelper.ParseMarkdownFile(mdFile);
+            var (metadata, _) = MarkdownService.ParseMarkdownFile(mdFile);
             return metadata;
         }
         return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
